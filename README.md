@@ -1,2 +1,2 @@
-# 6Tree
-6Tree: Space tree search algorithm
+# 6Tree: Space tree search algorithm for IPv6 active addresses
+Coming soon ...
