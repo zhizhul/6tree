@@ -1,2 +1,2 @@
 # 6Tree
-Coming soon ... test
+Coming soon ...
