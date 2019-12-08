@@ -64,6 +64,24 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
 
 void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, struct SearchTreeNode *A);
 
+int f3_calcscale_subset_TSSS(struct PreparedSpaceTreeNode *spe_ptr);
+
+struct SequenceNode *f3_cut_fseg(struct SequenceNode *&xi, int itn_budget);
+
+bool f3_same_DS(struct PreparedSpaceTreeNode *ptr1, struct PreparedSpaceTreeNode *ptr2);
+
+void f3_copy_TS2parent(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTreeNode *pptr);
+
+bool f3_is_descendant(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTreeNode *pptr);
+
+struct SequenceNode *f3_get_retired_nodes(struct SequenceNode *xi, struct SequenceNode *xi_h, struct PreparedSpaceTreeNode *node_ptr);
+
+struct VectorRegion f3_gather_descendant_SS(struct SequenceNode *retired_nodes);
+
+int f3_gather_descendant_NDA(struct SequenceNode *retired_nodes);
+
+void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h);
+
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6);
 
 void f3_access(int argc, const char * argv[]);

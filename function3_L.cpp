@@ -1035,6 +1035,297 @@ void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &ad
     delete [] regn_forest;
 }
 
+int f3_calcscale_subset_TSSS(struct PreparedSpaceTreeNode *spe_ptr)
+{
+    int dimensionality = f2_get_dimensionality(base_num);
+
+    int addrnum_TS = 0;
+    int expr_num = spe_ptr->TS.num;
+    for (int i = 0; i < expr_num; i++)
+    {
+        string expr = spe_ptr->TS.expressions[i];
+        int star_num = 0;
+        for (int j = 0; j < dimensionality; j++)
+        {
+            if (expr[j] == '*')
+            {
+                star_num++;
+            }
+        }
+        addrnum_TS += pow(base_num, star_num);
+    }
+
+    int addrnum_SS = 0;
+    expr_num = spe_ptr->SS.num;
+    for (int i = 0; i < expr_num; i++)
+    {
+        string expr = spe_ptr->SS.expressions[i];
+        int star_num = 0;
+        for (int j = 0; j < dimensionality; j++)
+        {
+            if (expr[j] == '*')
+            {
+                star_num++;
+            }
+        }
+        addrnum_SS += pow(base_num, star_num);
+    }
+
+    return addrnum_TS - addrnum_SS;
+}
+
+struct SequenceNode *f3_cut_fseg(struct SequenceNode *&xi, int itn_budget)
+{
+    // Select anterior nodes from xi, based on itn_budget.
+
+    struct SequenceNode *xi_h = xi;
+    struct SequenceNode *xi_ptr = xi;
+    while (true)
+    {
+        if (xi_ptr == NULL)
+        {
+            xi = NULL;
+            return xi_h;
+        }
+
+        struct PreparedSpaceTreeNode *spe_ptr =  xi_ptr->node;
+        itn_budget -= f3_calc_subset_TSSS(spe_ptr);
+        if (itn_budget > 0)
+        {
+            xi_ptr = xi_ptr->next;
+        }
+        else
+        {
+            xi = xi_ptr->next;
+            xi_ptr->next = NULL;
+            return xi_h;
+        }
+    }
+}
+
+bool f3_same_DS(struct PreparedSpaceTreeNode *ptr1, struct PreparedSpaceTreeNode *ptr2)
+{
+    // Return true if the DSs are same, else return false.
+
+    if (ptr1->DS.num != ptr2->DS.num)
+    {
+        return false;
+    }
+    int DS_num = ptr1->DS.num;
+    for (int i = 0; i < DS_num; i++)
+    {
+        if (ptr1->DS.stack[i] != ptr2->DS.stack[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void f3_copy_TS2parent(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTreeNode *pptr)
+{
+    int TS_num = ptr->TS.num;
+    pptr->TS.num = TS_num;
+    pptr->TS.expressions = new string [TS_num];
+    for (int i = 0; i < TS_num; i++)
+    {
+        pptr->TS.expressions[i] = ptr->TS.expressions[i];
+    }
+}
+
+bool f3_is_descendant(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTreeNode *pptr)
+{
+    // Check if ptr is descendant node of pptr, based on: if SS of ptr is included by TS of pptr.
+
+    string ptr_expr = ptr->SS.expressions[0];
+    int TS_num = pptr->TS.num;
+    for (int i = 0; i < TS_num; i++)
+    {
+        if (f3_expression_belong(ptr_expr, pptr->TS.expressions[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+struct SequenceNode *f3_get_retired_nodes(struct SequenceNode *xi, struct SequenceNode *xi_h, struct PreparedSpaceTreeNode *node_ptr)
+{
+    // Get the intersection set between descendant nodes of node_ptr and (xi cup xi_h), return the result as a linked list.
+
+    struct SequenceNode *retired_nodes = NULL;
+    struct SequenceNode *retired_nodes_tail = NULL;
+
+    struct SequenceNode *xi_ptr = xi;
+    while (xi_ptr != NULL)
+    {
+        if (f3_is_descendant(xi_ptr->node, node_ptr))
+        {
+            // Add xi_ptr->node into retired_nodes.
+            if (retired_nodes == NULL)
+            {
+                retired_nodes = new struct SequenceNode;
+                retired_nodes->node = xi_ptr->node;
+                retired_nodes->next = NULL;
+                retired_nodes_tail = retired_nodes;
+            }
+            else
+            {
+                struct SequenceNode *new_node = new struct SequenceNode;
+                new_node->node = xi_ptr->node;
+                new_node->next = NULL;
+                retired_nodes_tail->next = new_node;
+                retired_nodes_tail = new_node;
+            }
+        }
+        xi_ptr = xi_ptr->next;
+    }
+
+    struct SequenceNode *xi_h_ptr = xi_h;
+    while (xi_h_ptr != NULL)
+    {
+        if (f3_is_descendant(xi_h_ptr->node, node_ptr))
+        {
+            // Add xi_h_ptr->node into retired_nodes;
+            if (retired_nodes == NULL)
+            {
+                retired_nodes = new struct SequenceNode;
+                retired_nodes->node = xi_h_ptr->node;
+                retired_nodes->next = NULL;
+                retired_nodes_tail = retired_nodes;
+            }
+            else
+            {
+                struct SequenceNode *new_node = new struct SequenceNode;
+                new_node->node = xi_h_ptr->node;
+                new_node->next = NULL;
+                retired_nodes_tail->next = new_node;
+                retired_nodes_tail = new_node;
+            }
+
+        }
+        xi_h_ptr = xi_h_ptr->next;
+    }
+
+    return retired_nodes;
+}
+
+struct VectorRegion f3_gather_descendant_SS(struct SequenceNode *retired_nodes)
+{
+    struct VectorRegion SS;
+
+    int SS_num = 0;
+    struct SequenceNode *ptr = retired_nodes;
+    while (ptr != NULL)
+    {
+        SS_num += ptr->node->SS.num;
+        ptr = ptr->next;
+    }
+    SS.num = SS_num;
+
+    SS.expressions = new string [SS_num];
+    int i = 0;
+    ptr = retired_nodes;
+    while (ptr != NULL)
+    {
+        for (int j = 0; j < ptr->node->SS.num; j++)
+        {
+            SS.expressions[i++] = ptr->node->SS.expressions[j];
+        }
+        ptr = ptr->next;
+    }
+
+    return SS;
+}
+
+int f3_gather_descendant_NDA(struct SequenceNode *retired_nodes)
+{
+    int NDA = 0;
+
+    struct SequenceNode *ptr = retired_nodes;
+    while (ptr != NULL)
+    {
+        NDA += ptr->node->NDA;
+        ptr = ptr->next;
+    }
+
+    return NDA;
+}
+
+void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
+{
+    struct SequenceNode *new_nodes = NULL;
+    struct SequenceNode *new_nodes_tail = NULL;
+
+    // 1. Add necessary parent nodes into new_nodes.
+    struct SequenceNode *xi_h_ptr = xi_h;
+    while (xi_h_ptr != NULL)
+    {
+        struct PreparedSpaceTreeNode *spe_ptr = xi_h_ptr->node;
+        struct PreparedSpaceTreeNode *spe_pptr = spe_ptr->parent;
+        if (spe_pptr == NULL)
+        {
+            // spe_ptr is the root node, in the case, there is only one node in xi cup xi_h.
+            continue;
+        }
+        if (f3_same_DS(spe_pptr, spe_ptr))
+        {
+            // Copy the TS information to the parent node.
+            f3_copy_TS2parent(spe_ptr, spe_pptr);
+            // Add the parent node into new_nodes.
+            if (new_nodes == NULL)
+            {
+                new_nodes = new struct SequenceNode;
+                new_nodes->node = spe_pptr;
+                new_nodes->next = NULL;
+                new_nodes_tail = new_nodes;
+            }
+            else
+            {
+                struct SequenceNode *new_node = new struct SequenceNode;
+                new_node->node = spe_pptr;
+                new_node->next = NULL;
+                new_nodes_tail->next = new_node;
+                new_nodes_tail = new_node;
+            }
+        }
+        xi_h_ptr = xi_h_ptr->next;
+    }
+
+    // 2. Perform the replacement in xi and xi_h.
+    if (new_nodes == NULL)
+    {
+        return ;
+    }
+
+    // Generate an array to store information of new_nodes.
+    int new_nodes_arr_scale = 0;
+    struct SequenceNode *new_nodes_ptr = new_nodes;
+    while (new_nodes_ptr != NULL)
+    {
+        new_nodes_arr_scale++;
+        new_nodes_ptr = new_nodes_ptr->next;
+    }
+    struct PreparedSpaceTreeNode **new_nodes_arr = new struct PreparedSpaceTreeNode *[new_nodes_arr_scale + 2];
+    new_nodes_ptr = new_nodes;
+    for (int i = 0; i < new_nodes_arr_scale; i++)
+    {
+        new_nodes_arr[i] = new_nodes_ptr->node;
+        new_nodes_ptr = new_nodes_ptr->next;
+    }
+
+    for (int i = 0; i < new_nodes_arr_scale; i++)
+    {
+        struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr[i]);
+        new_nodes_arr[i]->SS = f3_gather_descendant_SS(retired_nodes);
+        new_nodes_arr[i]->NDA = f3_gather_descendant_NDA(retired_nodes);
+        // 分别在xi, xi_h, new_nodes_arr中去除存在于retired_nodes中的空间树结点
+        struct SequenceNode *new_seq = f3_delete_retired_inseq(xi, retired_nodes); // -- need work: 写到了这里
+    }
+    // 注意new_nodes, retired_nodes, arr最后要释放才行
+    // 注意xi_h肯定不会是空集，但是xi可能是空集
+}
+
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6)
 {
     // 1. Analyze instructions.
@@ -1126,8 +1417,25 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
     {
+        // There is no alias measurement in the local test.
+
+        // 3.3.1 Select anterior nodes from xi, based on itn_budget.
+        struct SequenceNode *xi_h = f3_cut_fseg(xi, itn_budget);
+
+        // 3.3.2 Perform the node replacement.
+        f3_replace_descendant(xi, xi_h);
+
+        // ----
+
         // -- need work: 写到了这里，答辩结束后继续写
+
         // 首先就要根据itn_budget来截取出xi_h
+
+        // 然后检查xi_h中的结点是否有要被取代的，进行取代工作
+
+        // 进行扫描和反馈
+
+        // 进行归并排序
     }
 
     // -- need work: 最后扫描完了之后可以检查一下总的活跃地址发现结果文件中是否有重复地址，原则上讲应该不会。

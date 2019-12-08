@@ -81,6 +81,7 @@ struct DimenStack
     // Scale
     int num;
     // Stack
+    // The index starts from 0.
     int *stack;
 };
 
