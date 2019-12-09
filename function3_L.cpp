@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "definition.hpp"
@@ -938,7 +939,7 @@ int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
     return den1 > den2;
 }
 
-struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h)
+struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h, int &active_addr_num)
 {
     // 1. Renew TSs and SSs of space tree nodes in xi_h.
     struct SequenceNode *xi_ptr = xi_h;
@@ -953,9 +954,11 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
 
     // 2. Read active addresses from active_addrs, renew NDAs of space tree nodes in xi_h.
     string line;
+    active_addr_num = 0;
     while (getline(active_addrs, line))
     {
         string addr = f3_std_tran_addr(line);
+        active_addr_num++;
         f3_renew_NDA(regn_forest, regn_tree_num, addr);
     }
 
@@ -985,7 +988,7 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
     return new_xi_h;
 }
 
-void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, struct SearchTreeNode *A)
+int f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log, struct SearchTreeNode *A)
 {
     // 1. Prepare the target address set C.
     
@@ -1017,12 +1020,20 @@ void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &ad
     active_addrs_write.close();
     
     // 3. Renew information of nodes in xi_h, and resort xi_h.
-
+    
+    int active_addr_num;
     ifstream active_addrs_read;
     active_addrs_read.open(_STEP_RES_FILE);
-    struct SequenceNode *new_xi_h = f3_local_feedback(active_addrs_read, regn_forest, TS_num, xi_h);
+    struct SequenceNode *new_xi_h = f3_local_feedback(active_addrs_read, regn_forest, TS_num, xi_h, active_addr_num);
     xi_h = new_xi_h;
     active_addrs_read.close();
+
+    f1_print_time();
+    cout << "[Local test]" << endl;
+    cout << "find active addresses: " << active_addr_num << ", budget: " << budget << endl;
+    f3_print_time(scan_log);
+    scan_log << "[Local test]" << endl;
+    scan_log << "find active addresses: " << active_addr_num << ", budget: " << budget << endl;
     
     // Remove the file corresponding to active_addrs.
     remove(_STEP_RES_FILE);
@@ -1033,6 +1044,8 @@ void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &ad
         f3_release_region_tree(regn_forest[i]);
     }
     delete [] regn_forest;
+
+    return active_addr_num;
 }
 
 int f3_calcscale_subset_TSSS(struct PreparedSpaceTreeNode *spe_ptr)
@@ -1252,6 +1265,86 @@ int f3_gather_descendant_NDA(struct SequenceNode *retired_nodes)
     return NDA;
 }
 
+void f3_delete_retired_inseq(struct SequenceNode *&seq, struct SequenceNode *retired_nodes)
+{
+    struct SequenceNode *retired_ptr = retired_nodes;
+    while (retired_ptr != NULL)
+    {
+        struct PreparedSpaceTreeNode *retired_node = retired_ptr->node;
+        struct SequenceNode *seq_ptr = seq;
+        while (seq_ptr != NULL)
+        {
+            if (seq_ptr->node == retired_node)
+            {
+                seq_ptr->node = NULL;
+            }
+            seq_ptr = seq_ptr->next;
+        }
+        retired_ptr = retired_ptr->next;
+    }
+
+    struct SequenceNode *seq_ptr = seq;
+    while (seq_ptr->node == NULL)
+    {
+        struct SequenceNode *tptr = seq_ptr;
+        seq_ptr = seq_ptr->next;
+        delete tptr;
+        if (seq_ptr == NULL)
+        {
+            seq = NULL;
+            return ;
+        }
+    }
+
+    seq = seq_ptr;
+    struct SequenceNode *seq_rptr = seq_ptr;
+    seq_ptr = seq_ptr->next;
+    while (seq_ptr != NULL)
+    {
+        if (seq_ptr->node == NULL)
+        {
+            struct SequenceNode *tptr = seq_ptr;
+            seq_ptr = seq_ptr->next;
+            delete tptr;
+        }
+        else
+        {
+            seq_rptr->next = seq_ptr;
+            seq_rptr = seq_ptr;
+            seq_ptr = seq_ptr->next;
+        }
+    }
+    seq_rptr->next = NULL;
+}
+
+void f3_delete_retired_inarr(struct PreparedSpaceTreeNode **arr, int arr_scale, struct SequenceNode *retired_nodes)
+{
+    struct SequenceNode *retired_ptr = retired_nodes;
+    while (retired_ptr != NULL)
+    {
+        struct PreparedSpaceTreeNode *retired_node = retired_ptr->node;
+        for (int i = 0; i < arr_scale; i++)
+        {
+            if (arr[i] == retired_node)
+            {
+                arr[i] = NULL;
+            }
+        }
+        retired_ptr = retired_ptr->next;
+    }
+}
+
+void f3_release_seq(struct SequenceNode *seq)
+{
+    struct SequenceNode *seq_ptr = seq;
+    while (seq_ptr != NULL)
+    {
+        struct SequenceNode *tptr = seq_ptr;
+        seq_ptr = seq_ptr->next;
+        delete tptr;
+    }
+}
+
 void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
 {
     struct SequenceNode *new_nodes = NULL;
@@ -1313,17 +1406,144 @@ void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
         new_nodes_arr[i] = new_nodes_ptr->node;
         new_nodes_ptr = new_nodes_ptr->next;
     }
+    f3_release_seq(new_nodes);
 
+    // Delete retired nodes and gather the information of SS and NDA.
     for (int i = 0; i < new_nodes_arr_scale; i++)
     {
-        struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr[i]);
-        new_nodes_arr[i]->SS = f3_gather_descendant_SS(retired_nodes);
-        new_nodes_arr[i]->NDA = f3_gather_descendant_NDA(retired_nodes);
-        // 分别在xi, xi_h, new_nodes_arr中去除存在于retired_nodes中的空间树结点
-        struct SequenceNode *new_seq = f3_delete_retired_inseq(xi, retired_nodes); // -- need work: 写到了这里
+        if (new_nodes_arr[i] != NULL)
+        {
+            struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr[i]);
+            new_nodes_arr[i]->SS = f3_gather_descendant_SS(retired_nodes);
+            new_nodes_arr[i]->NDA = f3_gather_descendant_NDA(retired_nodes);
+            f3_delete_retired_inseq(xi, retired_nodes);
+            f3_delete_retired_inseq(xi_h, retired_nodes);
+            f3_delete_retired_inarr(new_nodes_arr, new_nodes_arr_scale, retired_nodes);
+            f3_release_seq(retired_nodes);
+        }
     }
-    // 注意new_nodes, retired_nodes, arr最后要释放才行
-    // 注意xi_h肯定不会是空集，但是xi可能是空集
+
+    // Extend new nodes into xi_h.
+    xi_h_ptr = xi_h;
+    while (true)
+    {
+        if (xi_h_ptr->next == NULL)
+        {
+            break;
+        }
+        else
+        {
+            xi_h_ptr = xi_h_ptr->next;
+        }
+    }
+    struct SequenceNode *xi_h_tail = xi_h_ptr;
+    for (int i = 0; i < new_nodes_arr_scale; i++)
+    {
+        if (new_nodes_arr[i] != NULL)
+        {
+            struct SequenceNode *tptr = new struct SequenceNode;
+            tptr->node = new_nodes_arr[i];
+            tptr->next = NULL;
+            xi_h_tail->next = tptr;
+            xi_h_tail = tptr;
+        }
+    }
+    delete [] new_nodes_arr;
+}
+
+struct SequenceNode *f3_mergesort(struct SequenceNode *seq1, struct SequenceNode *seq2)
+{
+    struct SequenceNode *seq;
+    struct SequenceNode *ptr;
+    struct SequenceNode *seq1_ptr = seq1;
+    struct SequenceNode *seq2_ptr = seq2;
+
+    if (f3_density_cmp(seq1_ptr, seq2_ptr))
+    {
+        // AAD of seq1_ptr->node is higher than AAD of seq2_ptr->node.
+        ptr = seq1_ptr;
+        seq1_ptr = seq1_ptr->next;
+        ptr->next = NULL;
+    }
+    else
+    {
+        ptr = seq2_ptr;
+        seq2_ptr = seq2_ptr->next;
+        ptr->next = NULL;
+    }
+    seq = ptr;
+
+    while (seq1_ptr != NULL && seq2_ptr != NULL)
+    {
+        if (seq1_ptr == NULL)
+        {
+            ptr->next = seq2_ptr;
+            seq2_ptr = seq2_ptr->next;
+            ptr = ptr->next;
+            ptr->next = NULL;
+            continue;
+        }
+        if (seq2_ptr == NULL)
+        {
+            ptr->next = seq1_ptr;
+            seq1_ptr = seq1_ptr->next;
+            ptr = ptr->next;
+            ptr->next = NULL;
+            continue;
+        }
+        if (f3_density_cmp(seq1_ptr, seq2_ptr))
+        {
+            ptr->next = seq1_ptr;
+            seq1_ptr = seq1_ptr->next;
+            ptr->next = NULL;
+        }
+        else
+        {
+            ptr->next = seq2_ptr;
+            seq2_ptr = seq2_ptr->next;
+            ptr->next = NULL;
+        }
+    }
+
+    return seq;
+}
+
+void f3_print_time(ofstream &file)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    file << "[" << (1900 + ltm->tm_year) << "/" << (1 + ltm->tm_mon) << "/" << ltm->tm_mday << " " << ltm->tm_hour << ":" << ltm->tm_min << ":" << ltm->tm_sec << "]";
+}
+
+void f3_release_pspace_tree(struct PreparedSpaceTreeNode *node)
+{
+    int children_num = node->children_num;
+    for (int i = 0; i < children_num; i++)
+    {
+        f3_release_pspace_tree(node->children[i]);
+    }
+    if (children_num != 0)
+    {
+        delete [] node->children;
+    }
+    delete [] node->DS.stack;
+    delete [] node->TS.expressions;
+    delete [] node->SS.expressions;
+    delete node;
+}
+
+void f3_release_search_tree(struct SearchTreeNode *node)
+{
+    int children_num = node->children_num;
+    for (int i = 0; i < children_num; i++)
+    {
+        f3_release_search_tree(node->children[i]);
+    }
+    if (children_num != 0)
+    {
+        delete [] node->children;
+    }
+    delete node;
 }
 
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6)
@@ -1411,8 +1631,16 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     
     // addr_res stores all found active addresses.
     ofstream addr_total_res;
+    int addr_total_num = 0;
     addr_total_res.open(res_dir_str + "/" + _RES_FILE);
-    f3_local_scan_feedback(xi, budget, addr_total_res, A);
+    ofstream scan_log;
+    scan_log.open(res_dir_str + "/" + _LOG_FILE);
+    addr_total_num += f3_local_scan_feedback(xi, budget, addr_total_res, scan_log, A);
+    
+    f1_print_time();
+    cout << "[Local test] Pre scanning finished." << endl;
+    f3_print_time(scan_log);
+    scan_log << "[Local test] Pre scanning finished." << endl;
     
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
@@ -1425,26 +1653,36 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
         // 3.3.2 Perform the node replacement.
         f3_replace_descendant(xi, xi_h);
 
-        // ----
-
-        // -- need work: 写到了这里，答辩结束后继续写
-
-        // 首先就要根据itn_budget来截取出xi_h
-
-        // 然后检查xi_h中的结点是否有要被取代的，进行取代工作
-
-        // 进行扫描和反馈
-
-        // 进行归并排序
+        // 3.3.3 Scan and feedback.
+        addr_total_num += f3_local_scan_feedback(xi_h, budget, addr_total_res, scan_log, A);
+        
+        // 3.3.4 Merge sort.
+        struct SequenceNode *tptr = f3_mergesort(xi, xi_h);
+        xi = tptr;
     }
 
-    // -- need work: 最后扫描完了之后可以检查一下总的活跃地址发现结果文件中是否有重复地址，原则上讲应该不会。
-    // 3.4 Output results. 那么这个地方addr_total_res应该已经输出完了，看看Iris信息怎么输出。
-    ofstream iris_res;
+    f1_print_time();
+    cout << "[Local test] Total scanning finished." << endl;
+    cout << "find total active addresses: " << addr_total_num << endl;
+    f3_print_time(scan_log);
+    scan_log << "[Local test] Total scanning finished." << endl;
+    scan_log << "find total active addresses: " << addr_total_num << endl;
+    addr_total_res.close();
+    scan_log.close();
+
+    // need work: 最后扫描完了之后可以检查一下总的活跃地址发现结果文件中是否有重复地址，原则上讲应该不会。
+    // 3.4 Output iris information. 
+    f1_print_time();
+    cout << "[Local test] Output visualization information." << endl;
+    // need work
+    // ofstream iris_res;
+    f1_print_time();
+    cout << "[Local test] Output visualization information finished." << endl;
     
     // 3.5 Release data.
-    // -- need work: 生成的空间树，搜索树，结点指针序列最后需要释放。
-    addr_total_res.close();
+    f3_release_pspace_tree(root);
+    f3_release_search_tree(A);
+    f3_release_seq(xi);
     
     f1_print_time();
     cout << "[Local test] Local test finished." << endl;

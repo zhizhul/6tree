@@ -60,9 +60,9 @@ void f3_renew_NDA(struct RegionTreeNode **regn_forest, int regn_tree_num, string
 
 int f3_density_cmp(struct SequenceNode se_node1, struct SequenceNode se_node2);
 
-struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h);
+struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h, int &active_addr_num);
 
-void f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, struct SearchTreeNode *A);
+int f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log, struct SearchTreeNode *A);
 
 int f3_calcscale_subset_TSSS(struct PreparedSpaceTreeNode *spe_ptr);
 
@@ -80,7 +80,21 @@ struct VectorRegion f3_gather_descendant_SS(struct SequenceNode *retired_nodes);
 
 int f3_gather_descendant_NDA(struct SequenceNode *retired_nodes);
 
+void f3_delete_retired_inseq(struct SequenceNode *&seq, struct SequenceNode *retired_nodes);
+
+void f3_delete_retired_inarr(struct PreparedSpaceTreeNode **arr, int arr_scale, struct SequenceNode *retired_nodes);
+
+void f3_release_seq(struct SequenceNode *seq);
+
 void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h);
+
+struct SequenceNode *f3_mergesort(struct SequenceNode *seq1, struct SequenceNode *seq2);
+
+void f3_print_time(ofstream &file);
+
+void f3_release_pspace_tree(struct PreparedSpaceTreeNode *node);
+
+void f3_release_search_tree(struct SearchTreeNode *node);
 
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6);
 

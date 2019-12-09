@@ -74,6 +74,8 @@ struct SpaceTreeNode
 #define _ALI_FILE "alias_regions"
 // File name of Iris information（--need work: 暂定，后面还要思考一下这个数据怎么保存）
 #define _IRIS_FILE "iris_info"
+// File name of scan log
+#define _LOG_FILE "scan_log"
 
 // Dimension stack
 struct DimenStack
@@ -133,7 +135,7 @@ struct SequenceNode
 // Search tree node for local test, storing information about known all addresses
 struct SearchTreeNode
 {
-    // Number of active addresses in the region of the node, -- need work: 代码写完后检查一下，这里面有些数据可能用不到，就可以删去了
+    // Number of active addresses in the region of the node, -- need work: 代码写完后检查一下，这里面有些数据可能用不到（比如说level），就可以删去了
     int NAA;
     // Level of the node, the root node level is 0.
     int level;
