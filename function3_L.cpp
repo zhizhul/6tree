@@ -36,14 +36,14 @@ void f3_trim(string &s)
     }
 }
 
-void f3_initialize_DS(struct PreparedSpaceTreeNode *node, struct DimenStack *parent_DS, int dimensionality, string *arr)
+void f3_initialize_DS_expr(struct PreparedSpaceTreeNode *node, struct DimenStack *parent_DS, int dimensionality, string *arr)
 {
-    // Initialize the dimensional stack.
+    // Initialize the dimensional stack and the region expression.
     // Its index starts from 0.
     
     // Inherit the stack from the parent node.
-    node->DS.stack = new int[dimensionality];
-    int *times = new int[dimensionality];
+    node->DS.stack = new int [dimensionality];
+    int *times = new int [dimensionality];
     for (int i = 0; i < dimensionality; i++)
     {
         times[i] = 0;
@@ -57,6 +57,9 @@ void f3_initialize_DS(struct PreparedSpaceTreeNode *node, struct DimenStack *par
     }
     num = parent_num;
     node->DS.num = num;
+    
+    // Initialize the region expression, and it needs update.
+    node->expression = arr[node->inf];
     
     // Push new steady dimensions into the DS.
     int inf = node->inf;
@@ -82,10 +85,29 @@ void f3_initialize_DS(struct PreparedSpaceTreeNode *node, struct DimenStack *par
         }
     }
     node->DS.num = num;
+    
+    // Update the region expression, based on the current DS.
+    int *dimen_time = new int [dimensionality];
+    for (int i = 0; i < dimensionality; i++)
+    {
+        dimen_time[i] = 0;
+    }
+    for (int i = 0; i < num; i++)
+    {
+        dimen_time[node->DS.stack[i]] = 1;
+    }
+    for (int i = 0; i < dimensionality; i++)
+    {
+        if (dimen_time[i] == 0)
+        {
+            node->expression[i] = '*';
+        }
+    }
+    
     int children_num = node->children_num;
     for (int i = 0; i < children_num; i++)
     {
-        f3_initialize_DS(node->children[i], &(node->DS), dimensionality, arr);
+        f3_initialize_DS_expr(node->children[i], &(node->DS), dimensionality, arr);
     }
     
     // For leaf nodes, push remaining dimensions.
@@ -108,6 +130,7 @@ void f3_initialize_DS(struct PreparedSpaceTreeNode *node, struct DimenStack *par
 int f3_DS_pop(struct PreparedSpaceTreeNode *node)
 {
     // Pop a dimension from the DS.
+    
     int num = node->DS.num;
     num--;
     int res = node->DS.stack[num];
@@ -118,6 +141,7 @@ int f3_DS_pop(struct PreparedSpaceTreeNode *node)
 void f3_TS_expand(struct PreparedSpaceTreeNode *node, int dimen)
 {
     // Expand the TS based on a dimension.
+    
     int num = node->TS.num;
     string *exps = node->TS.expressions;
     for (int i = 0; i < num; i++)
@@ -211,6 +235,7 @@ struct PreparedSpaceTreeNode *f3_prepare_space_tree(string treedir_name)
         int children_num = atoi(str.c_str());
         
         node_arr[num] = new struct PreparedSpaceTreeNode;
+        node_arr[num]->number = num;
         node_arr[num]->inf = inf;
         node_arr[num]->sup = sup;
         
@@ -262,7 +287,8 @@ struct PreparedSpaceTreeNode *f3_prepare_space_tree(string treedir_name)
     emptyStack.num = 0;
     emptyStack.stack = NULL;
     int dimensionality = f2_get_dimensionality(base_num);
-    f3_initialize_DS(root, &emptyStack, dimensionality, arr);
+    f3_initialize_DS_expr(root, &emptyStack, dimensionality, arr);
+    
     f3_initialize_TS_SS_NDA(node_arr, node_num, arr);
     
     delete [] node_arr;
@@ -522,7 +548,7 @@ void f3_release_region_tree(struct RegionTreeNode *regn_ptr)
             f3_release_region_tree(regn_ptr->children[i]);
         }
     }
-    delete regn_ptr->children;
+    delete [] regn_ptr->children;
     delete regn_ptr;
 }
 
@@ -534,21 +560,14 @@ void f3_region_tree_subtract(struct RegionTreeNode *regn_root, string expr)
     struct RegionTreeNode *regn_ptr = regn_root;
     while (regn_ptr->is_leaf == false)
     {
-        bool find_subseqt_node = false;
         for (int i = 0; i < base_num; i++) // children_num == base_num
         {
             struct RegionTreeNode *chd_ptr = regn_ptr->children[i];
             if (chd_ptr != NULL && f3_expression_belong(expr, chd_ptr->expression))
             {
                 regn_ptr = chd_ptr;
-                find_subseqt_node = true;
                 break;
             }
-        }
-        if (find_subseqt_node == false)
-        {
-            // The subtract operation has been performed.
-            return ;
         }
     }
     
@@ -710,14 +729,13 @@ void f3_local_rec_output_addrs(struct SearchTreeNode *sch_node, ofstream &addr_t
     }
 }
 
-int f3_local_rec_search(string expr, struct SearchTreeNode *sch_node, ofstream &addr_total_res, ofstream &active_addrs)
+void f3_local_rec_search(string expr, struct SearchTreeNode *sch_node, ofstream &addr_total_res, ofstream &active_addrs)
 {
     // Search active addresses through a recursive design.
     // Found active addresses will be stored in addr_total_res and active_addrs based on colon-hexadecimal notation.
     // Return total scanned address number.
     
     int expr_len = (int )expr.length();
-    int used_budget;
     if (expr[0] == '*')
     {
         bool all_star = true;
@@ -732,21 +750,16 @@ int f3_local_rec_search(string expr, struct SearchTreeNode *sch_node, ofstream &
         if (all_star == true)
         {
             f3_local_rec_output_addrs(sch_node, addr_total_res, active_addrs);
-            
-            used_budget = pow(base_num, expr_len);
-            return used_budget;
         }
         else
         {
-            used_budget = 0;
             for (int i = 0; i < base_num; i++)
             {
                 if (sch_node->children[i] != NULL)
                 {
-                    used_budget += f3_local_rec_search(expr.substr(1), sch_node->children[i], addr_total_res, active_addrs);
+                    f3_local_rec_search(expr.substr(1), sch_node->children[i], addr_total_res, active_addrs);
                 }
             }
-            return used_budget;
         }
     }
     else
@@ -765,24 +778,15 @@ int f3_local_rec_search(string expr, struct SearchTreeNode *sch_node, ofstream &
             index = expr[0] - '0';
         }
         
-        if (sch_node->children[index] == NULL)
-        {
-            used_budget = 0;
-            return used_budget;
-        }
-        else
+        if (sch_node->children[index] != NULL)
         {
             if (expr_len == 1)
             {
-                f3_local_rec_output_addrs(sch_node, addr_total_res, active_addrs);
-                
-                used_budget = 1;
-                return used_budget;
+                f3_local_rec_output_addrs(sch_node->children[index], addr_total_res, active_addrs);
             }
             else
             {
-                used_budget = f3_local_rec_search(expr.substr(1), sch_node->children[index], addr_total_res, active_addrs);
-                return used_budget;
+                f3_local_rec_search(expr.substr(1), sch_node->children[index], addr_total_res, active_addrs);
             }
         }
     }
@@ -792,9 +796,22 @@ int f3_scan_on_leaves(struct RegionTreeNode *regn_node, struct SearchTreeNode *A
 {
     // Found active addresses will be stored in addr_total_res and active_addrs based on colon-hexadecimal notation.
     // Return total scanned address number.
+    
     if (regn_node->is_leaf == true)
     {
-        return f3_local_rec_search(regn_node->expression, A, addr_total_res, active_addrs);
+        string expr = regn_node->expression;
+        f3_local_rec_search(expr, A, addr_total_res, active_addrs);
+        int expr_len = (int )expr.length();
+        int star_num = 0;
+        for (int i = 0; i < expr_len; i++)
+        {
+            if (expr[i] == '*')
+            {
+                star_num++;
+            }
+        }
+        int used_budget = pow(base_num, star_num);
+        return used_budget;
     }
     else
     {
@@ -811,14 +828,20 @@ int f3_scan_on_leaves(struct RegionTreeNode *regn_node, struct SearchTreeNode *A
     }
 }
 
-void f3_local_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res, ofstream &active_addrs, struct SearchTreeNode *A)
+void f3_local_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res, struct SearchTreeNode *A)
 {
     // Perform a local scan, the found active addresses will be stored both in addr_total_res and active_addrs.
+    
+    ofstream active_addrs;
+    active_addrs.open(_STEP_RES_FILE);
+    
     for (int i = 0; i < tree_num; i++)
     {
         struct RegionTreeNode *regn_tree = regn_forest[i];
         budget -= f3_scan_on_leaves(regn_tree, A, addr_total_res, active_addrs);
     }
+    
+    active_addrs.close();
 }
 
 void f3_copy_TS2SS(struct PreparedSpaceTreeNode *spe_node)
@@ -829,7 +852,7 @@ void f3_copy_TS2SS(struct PreparedSpaceTreeNode *spe_node)
     }
     int SS_num = spe_node->TS.num;
     spe_node->SS.num = SS_num;
-    spe_node->SS.expressions = new string [SS_num];
+    spe_node->SS.expressions = new string [SS_num + 2];
     for (int i = 0; i < SS_num; i++)
     {
         spe_node->SS.expressions[i] = spe_node->TS.expressions[i];
@@ -860,36 +883,18 @@ string f3_std_tran_addr(string expr)
     }
 }
 
-void f3_renew_NDA(struct RegionTreeNode **regn_forest, int regn_tree_num, string addr)
+void f3_renew_NDA(struct RegionTreeNode **regn_forest, int regn_tree_num, string *arr, int arr_scale)
 {
-    struct RegionTreeNode *regn_ptr;
-
-    for (int i = 0; i < regn_tree_num; i++)
+    int rtree_idx = 0;
+    for (int i = 0; i < arr_scale; i++)
     {
-        if (f3_expression_belong(addr, regn_forest[i]->expression))
+        string expr = arr[i];
+        while (!f3_expression_belong(expr, regn_forest[rtree_idx]->expression))
         {
-            regn_ptr = regn_forest[i];
-            break;
+            rtree_idx++;
         }
+        regn_forest[rtree_idx]->spe_node_ptr->NDA++;
     }
-    
-    while (regn_ptr->is_leaf != true)
-    {
-        for (int i = 0; i < base_num; i++)
-        {
-            if (regn_ptr->children[i] != NULL)
-            {
-                if (f3_expression_belong(addr, regn_ptr->children[i]->expression))
-                {
-                    regn_ptr = regn_ptr->children[i];
-                    break;
-                }
-            }
-        }
-    }
-
-    struct PreparedSpaceTreeNode *spe_ptr = regn_ptr->spe_node_ptr;
-    spe_ptr->NDA++;
 }
 
 int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
@@ -939,7 +944,14 @@ int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
     return den1 > den2;
 }
 
-struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h, int &active_addr_num)
+int f3_regn_cmp(struct RegionTreeNode *node1, struct RegionTreeNode *node2)
+{
+    string s1 = node1->expression;
+    string s2 = node2->expression;
+    return s1.compare(s2) < 0;
+}
+
+struct SequenceNode *f3_local_feedback(struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h, int &active_addr_num)
 {
     // 1. Renew TSs and SSs of space tree nodes in xi_h.
     struct SequenceNode *xi_ptr = xi_h;
@@ -953,14 +965,33 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
     }
 
     // 2. Read active addresses from active_addrs, renew NDAs of space tree nodes in xi_h.
+    
+    // 2.1 Sort detected active addresses.
+    ifstream active_addrs_read;
+    active_addrs_read.open(_STEP_RES_FILE);
     string line;
     active_addr_num = 0;
-    while (getline(active_addrs, line))
+    while (getline(active_addrs_read, line))
     {
-        string addr = f3_std_tran_addr(line);
         active_addr_num++;
-        f3_renew_NDA(regn_forest, regn_tree_num, addr);
     }
+    active_addrs_read.close();
+    string *arr = new string [active_addr_num + 2];
+    active_addrs_read.open(_STEP_RES_FILE);
+    active_addr_num = 0;
+    while (getline(active_addrs_read, line))
+    {
+        arr[active_addr_num++] = f3_std_tran_addr(line);
+    }
+    active_addrs_read.close();
+    sort(arr, arr + active_addr_num, f1_str_cmp);
+    
+    // 2.2 Sort region trees based on their region expressions.
+    sort(regn_forest, regn_forest + regn_tree_num, f3_regn_cmp);
+    
+    // 2.3 Perform the renew operation.
+    f3_renew_NDA(regn_forest, regn_tree_num, arr, active_addr_num);
+    delete [] arr;
 
     // 3. Resort space tree nodes of xi_h, based on NDA/|SS|.
     int xi_len = 0;
@@ -970,7 +1001,7 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
         xi_len++;
         xi_ptr = xi_ptr->next;
     }
-    struct SequenceNode **xi_arr = struct SequenceNode *[xi_len + 2];
+    struct SequenceNode **xi_arr = new struct SequenceNode *[xi_len + 2];
     xi_ptr = xi_h;
     for (int i = 0; i < xi_len; i++)
     {
@@ -988,7 +1019,7 @@ struct SequenceNode *f3_local_feedback(ofstream &active_addrs, struct RegionTree
     return new_xi_h;
 }
 
-int f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log, struct SearchTreeNode *A)
+int f3_local_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log, struct SearchTreeNode *A)
 {
     // 1. Prepare the target address set C.
     
@@ -1003,7 +1034,7 @@ int f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &add
     
     // Generate a corresponding region tree forest base on the data, for representing the targets.
     // The index starts at 0.
-    struct RegionTreeNode **regn_forest = new struct RegionTreeNode *[TS_num + 2];
+    struct RegionTreeNode **regn_forest = new struct RegionTreeNode *[TS_num];
     xi_ptr = xi_h;
     int forest_idx = 0;
     while (xi_ptr != NULL)
@@ -1014,26 +1045,20 @@ int f3_local_scan_feedback(struct SequenceNode *xi_h, int &budget, ofstream &add
     
     // 2. Perform the scan and renew budget and addr_total_res.
     
-    ofstream active_addrs_write;
-    active_addrs.open(_STEP_RES_FILE);
-    f3_local_scan(regn_forest, TS_num, budget, addr_total_res, active_addrs_write, A);
-    active_addrs_write.close();
+    f3_local_scan(regn_forest, TS_num, budget, addr_total_res, A);
     
     // 3. Renew information of nodes in xi_h, and resort xi_h.
     
     int active_addr_num;
-    ifstream active_addrs_read;
-    active_addrs_read.open(_STEP_RES_FILE);
-    struct SequenceNode *new_xi_h = f3_local_feedback(active_addrs_read, regn_forest, TS_num, xi_h, active_addr_num);
+    struct SequenceNode *new_xi_h = f3_local_feedback(regn_forest, TS_num, xi_h, active_addr_num);
     xi_h = new_xi_h;
-    active_addrs_read.close();
-
+    
     f1_print_time();
-    cout << "[Local test]" << endl;
-    cout << "find active addresses: " << active_addr_num << ", budget: " << budget << endl;
+    cout << endl;
+    cout << "find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
     f3_print_time(scan_log);
-    scan_log << "[Local test]" << endl;
-    scan_log << "find active addresses: " << active_addr_num << ", budget: " << budget << endl;
+    scan_log << endl;
+    scan_log << "find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
     
     // Remove the file corresponding to active_addrs.
     remove(_STEP_RES_FILE);
@@ -1102,7 +1127,7 @@ struct SequenceNode *f3_cut_fseg(struct SequenceNode *&xi, int itn_budget)
         }
 
         struct PreparedSpaceTreeNode *spe_ptr =  xi_ptr->node;
-        itn_budget -= f3_calc_subset_TSSS(spe_ptr);
+        itn_budget -= f3_calcscale_subset_TSSS(spe_ptr);
         if (itn_budget > 0)
         {
             xi_ptr = xi_ptr->next;
@@ -1148,23 +1173,21 @@ void f3_copy_TS2parent(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTr
 
 bool f3_is_descendant(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTreeNode *pptr)
 {
-    // Check if ptr is descendant node of pptr, based on: if SS of ptr is included by TS of pptr.
-
-    string ptr_expr = ptr->SS.expressions[0];
-    int TS_num = pptr->TS.num;
-    for (int i = 0; i < TS_num; i++)
+    // Check if ptr is descendant node of pptr, based on: if expr of ptr is included by expr of pptr.
+    
+    if (f3_expression_belong(ptr->expression, pptr->expression))
     {
-        if (f3_expression_belong(ptr_expr, pptr->TS.expressions[i]))
-        {
-            return true;
-        }
+        return true;
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
-struct SequenceNode *f3_get_retired_nodes(struct SequenceNode *xi, struct SequenceNode *xi_h, struct PreparedSpaceTreeNode *node_ptr)
+struct SequenceNode *f3_get_retired_nodes(struct SequenceNode *xi, struct SequenceNode *xi_h, struct PreparedSpaceTreeNode **nnodes_arr, int arr_len, struct PreparedSpaceTreeNode *node_ptr)
 {
-    // Get the intersection set between descendant nodes of node_ptr and (xi cup xi_h), return the result as a linked list.
+    // Get the intersection set between descendant nodes of node_ptr and (xi \cup xi_h), return the result as a linked list.
 
     struct SequenceNode *retired_nodes = NULL;
     struct SequenceNode *retired_nodes_tail = NULL;
@@ -1215,9 +1238,32 @@ struct SequenceNode *f3_get_retired_nodes(struct SequenceNode *xi, struct Sequen
                 retired_nodes_tail->next = new_node;
                 retired_nodes_tail = new_node;
             }
-
         }
         xi_h_ptr = xi_h_ptr->next;
+    }
+    
+    for (int i = 0; i < arr_len; i++)
+    {
+        // 然后用expression值来判定后代关系。
+        if (nnodes_arr[i] != NULL && nnodes_arr[i] != node_ptr && f3_is_descendant(nnodes_arr[i], node_ptr))
+        {
+            // Add nnodes_arr[i] into retired_nodes;
+            if (retired_nodes == NULL)
+            {
+                retired_nodes = new struct SequenceNode;
+                retired_nodes->node = nnodes_arr[i];
+                retired_nodes->next = NULL;
+                retired_nodes_tail = retired_nodes;
+            }
+            else
+            {
+                struct SequenceNode *new_node = new struct SequenceNode;
+                new_node->node = nnodes_arr[i];
+                new_node->next = NULL;
+                retired_nodes_tail->next = new_node;
+                retired_nodes_tail = new_node;
+            }
+        }
     }
 
     return retired_nodes;
@@ -1236,7 +1282,7 @@ struct VectorRegion f3_gather_descendant_SS(struct SequenceNode *retired_nodes)
     }
     SS.num = SS_num;
 
-    SS.expressions = new string [SS_num];
+    SS.expressions = new string [SS_num + 2];
     int i = 0;
     ptr = retired_nodes;
     while (ptr != NULL)
@@ -1267,6 +1313,11 @@ int f3_gather_descendant_NDA(struct SequenceNode *retired_nodes)
 
 void f3_delete_retired_inseq(struct SequenceNode *&seq, struct SequenceNode *retired_nodes)
 {
+    if (seq == NULL)
+    {
+        return ;
+    }
+    
     struct SequenceNode *retired_ptr = retired_nodes;
     while (retired_ptr != NULL)
     {
@@ -1345,6 +1396,11 @@ void f3_release_seq(struct SequenceNode *seq)
     }
 }
 
+int f3_spenum_cmp(struct PreparedSpaceTreeNode *node1, struct PreparedSpaceTreeNode *node2)
+{
+    return node1->number > node2->number;
+}
+
 void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
 {
     struct SequenceNode *new_nodes = NULL;
@@ -1407,13 +1463,18 @@ void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
         new_nodes_ptr = new_nodes_ptr->next;
     }
     f3_release_seq(new_nodes);
+    
+    // Sort and unique new_nodes_arr.
+    sort(new_nodes_arr, new_nodes_arr + new_nodes_arr_scale, f3_spenum_cmp);
+    int tmp_scale = (int )(unique(new_nodes_arr, new_nodes_arr + new_nodes_arr_scale) - new_nodes_arr);
+    new_nodes_arr_scale = tmp_scale;
 
     // Delete retired nodes and gather the information of SS and NDA.
     for (int i = 0; i < new_nodes_arr_scale; i++)
     {
         if (new_nodes_arr[i] != NULL)
         {
-            struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr[i]);
+            struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr, new_nodes_arr_scale, new_nodes_arr[i]);
             new_nodes_arr[i]->SS = f3_gather_descendant_SS(retired_nodes);
             new_nodes_arr[i]->NDA = f3_gather_descendant_NDA(retired_nodes);
             f3_delete_retired_inseq(xi, retired_nodes);
@@ -1453,8 +1514,16 @@ void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
 
 struct SequenceNode *f3_mergesort(struct SequenceNode *seq1, struct SequenceNode *seq2)
 {
-    struct SequenceNode *seq;
-    struct SequenceNode *ptr;
+    if (seq1 == NULL)
+    {
+        return seq2;
+    }
+    if (seq2 == NULL)
+    {
+        return seq1;
+    }
+    
+    struct SequenceNode *seq, *ptr;
     struct SequenceNode *seq1_ptr = seq1;
     struct SequenceNode *seq2_ptr = seq2;
 
@@ -1473,7 +1542,7 @@ struct SequenceNode *f3_mergesort(struct SequenceNode *seq1, struct SequenceNode
     }
     seq = ptr;
 
-    while (seq1_ptr != NULL && seq2_ptr != NULL)
+    while (seq1_ptr != NULL || seq2_ptr != NULL)
     {
         if (seq1_ptr == NULL)
         {
@@ -1495,12 +1564,14 @@ struct SequenceNode *f3_mergesort(struct SequenceNode *seq1, struct SequenceNode
         {
             ptr->next = seq1_ptr;
             seq1_ptr = seq1_ptr->next;
+            ptr = ptr->next;
             ptr->next = NULL;
         }
         else
         {
             ptr->next = seq2_ptr;
             seq2_ptr = seq2_ptr->next;
+            ptr = ptr->next;
             ptr->next = NULL;
         }
     }
@@ -1537,7 +1608,10 @@ void f3_release_search_tree(struct SearchTreeNode *node)
     int children_num = node->children_num;
     for (int i = 0; i < children_num; i++)
     {
-        f3_release_search_tree(node->children[i]);
+        if (node->children[i] != NULL)
+        {
+            f3_release_search_tree(node->children[i]);
+        }
     }
     if (children_num != 0)
     {
@@ -1638,9 +1712,9 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     addr_total_num += f3_local_scan_feedback(xi, budget, addr_total_res, scan_log, A);
     
     f1_print_time();
-    cout << "[Local test] Pre scanning finished." << endl;
+    cout << endl << "Pre scanning finished." << endl;
     f3_print_time(scan_log);
-    scan_log << "[Local test] Pre scanning finished." << endl;
+    scan_log << endl << "Pre scanning finished." << endl;
     
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
@@ -1662,27 +1736,34 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     }
 
     f1_print_time();
-    cout << "[Local test] Total scanning finished." << endl;
+    cout << endl << "Total scanning finished." << endl;
     cout << "find total active addresses: " << addr_total_num << endl;
     f3_print_time(scan_log);
-    scan_log << "[Local test] Total scanning finished." << endl;
+    scan_log << endl << "Total scanning finished." << endl;
     scan_log << "find total active addresses: " << addr_total_num << endl;
     addr_total_res.close();
     scan_log.close();
 
-    // need work: 最后扫描完了之后可以检查一下总的活跃地址发现结果文件中是否有重复地址，原则上讲应该不会。
     // 3.4 Output iris information. 
     f1_print_time();
     cout << "[Local test] Output visualization information." << endl;
-    // need work
+    
+    // -- need work
     // ofstream iris_res;
+    
     f1_print_time();
     cout << "[Local test] Output visualization information finished." << endl;
     
     // 3.5 Release data.
+    f1_print_time();
+    cout << "[Local test] Release data." << endl;
+    
     f3_release_pspace_tree(root);
     f3_release_search_tree(A);
     f3_release_seq(xi);
+    
+    f1_print_time();
+    cout << "[Local test] Release data finished." << endl;
     
     f1_print_time();
     cout << "[Local test] Local test finished." << endl;

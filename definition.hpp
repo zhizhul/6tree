@@ -72,7 +72,7 @@ struct SpaceTreeNode
 #define _STEP_RES_FILE "active_addrs"
 // File name of detected alias regions
 #define _ALI_FILE "alias_regions"
-// File name of Iris information（--need work: 暂定，后面还要思考一下这个数据怎么保存）
+// File name of Iris information（--need work: 后面还要思考一下这个数据怎么保存）
 #define _IRIS_FILE "iris_info"
 // File name of scan log
 #define _LOG_FILE "scan_log"
@@ -106,6 +106,8 @@ struct PreparedSpaceTreeNode
     int inf;
     // Upper bound index
     int sup;
+    // Region expression, for instance, 20030**40...00*...*.
+    string expression;
     // Parent node pointer
     struct PreparedSpaceTreeNode *parent;
     // Child node pointers
