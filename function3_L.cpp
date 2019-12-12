@@ -59,7 +59,7 @@ void f3_initialize_DS_expr(struct PreparedSpaceTreeNode *node, struct DimenStack
     node->DS.num = num;
     
     // Initialize the region expression, and it needs update.
-    node->expression = arr[node->inf];
+    node->subspace = arr[node->inf];
     
     // Push new steady dimensions into the DS.
     int inf = node->inf;
@@ -100,7 +100,7 @@ void f3_initialize_DS_expr(struct PreparedSpaceTreeNode *node, struct DimenStack
     {
         if (dimen_time[i] == 0)
         {
-            node->expression[i] = '*';
+            node->subspace[i] = '*';
         }
     }
     
@@ -1175,7 +1175,7 @@ bool f3_is_descendant(struct PreparedSpaceTreeNode *ptr, struct PreparedSpaceTre
 {
     // Check if ptr is descendant node of pptr, based on: if expr of ptr is included by expr of pptr.
     
-    if (f3_expression_belong(ptr->expression, pptr->expression))
+    if (f3_expression_belong(ptr->subspace, pptr->subspace))
     {
         return true;
     }
@@ -1620,6 +1620,60 @@ void f3_release_search_tree(struct SearchTreeNode *node)
     delete node;
 }
 
+void f3_clear_NDA(struct PreparedSpaceTreeNode *node)
+{
+    node->NDA = 0;
+    
+    if (node->children_num != 0)
+    {
+        int children_num = node->children_num;
+        for (int i = 0; i < children_num; i++)
+        {
+            f3_clear_NDA(node->children[i]);
+        }
+    }
+}
+
+void f3_count_NDA(ifstream &addr_total_res_read, struct PreparedSpaceTreeNode *root)
+{
+    string line;
+    while (getline(addr_total_res_read, line))
+    {
+        string vec = f3_std_tran_addr(line);
+        
+        struct PreparedSpaceTreeNode *node = root;
+        while (true)
+        {
+            node->NDA++;
+            int children_num = node->children_num;
+            int i = 0;
+            for (; i < children_num; i++)
+            {
+                if (f3_expression_belong(vec, node->children[i]->subspace))
+                {
+                    node = node->children[i];
+                    break;
+                }
+            }
+            if (i == children_num)
+            {
+                break;
+            }
+        }
+    }
+}
+
+void f3_output_iris(ofstream &iris_res, struct PreparedSpaceTreeNode *root)
+{
+    // -- need work，依次输出结点信息，其中density可以直接计算
+    
+    // base_num :
+    // node_num :
+    // num, inf, sup, parent_num, children_num, subspace, NDA, density
+    // ...
+    
+}
+
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6)
 {
     // 1. Analyze instructions.
@@ -1743,27 +1797,36 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     scan_log << "find total active addresses: " << addr_total_num << endl;
     addr_total_res.close();
     scan_log.close();
+    
+    // 3.4 Replease search tree data.
+    f1_print_time();
+    cout << "[Local test] Release search tree data." << endl;
+    f3_release_search_tree(A);
+    f1_print_time();
+    cout << "[Local test] Release search tree data finished." << endl;
 
-    // 3.4 Output iris information. 
+    // 3.5 Output iris information.
     f1_print_time();
     cout << "[Local test] Output visualization information." << endl;
-    
-    // -- need work
-    // ofstream iris_res;
-    
+    f3_clear_NDA(root);
+    ifstream addr_total_res_read;
+    addr_total_res_read.open(res_dir_str + "/" + _RES_FILE);
+    f3_count_NDA(addr_total_res_read, root);
+    addr_total_res_read.close();
+    ofstream iris_res;
+    iris_res.open(res_dir_str + "/" + _IRIS_FILE);
+    f3_output_iris(iris_res, root);
+    iris_res.close();
     f1_print_time();
     cout << "[Local test] Output visualization information finished." << endl;
     
-    // 3.5 Release data.
+    // 3.6 Release space tree and sequence data.
     f1_print_time();
-    cout << "[Local test] Release data." << endl;
-    
+    cout << "[Local test] Release space tree and sequence data." << endl;
     f3_release_pspace_tree(root);
-    f3_release_search_tree(A);
     f3_release_seq(xi);
-    
     f1_print_time();
-    cout << "[Local test] Release data finished." << endl;
+    cout << "[Local test] Release space tree and sequence data finished." << endl;
     
     f1_print_time();
     cout << "[Local test] Local test finished." << endl;
