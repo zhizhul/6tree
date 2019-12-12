@@ -2,7 +2,7 @@
 //  function2_G.hpp
 //  6Tree
 //
-//  Created by Zhizhu Liu on 2019/3/1.
+//  Created by Zhizhu Liu on 2019/12/10.
 //
 
 #ifndef function2_G_hpp

@@ -2,7 +2,7 @@
 //  function1_T.hpp
 //  6Tree
 //
-//  Created by Zhizhu Liu on 2018/12/12.
+//  Created by Zhizhu Liu on 2018/12/10.
 //
 
 #ifndef function1_T_hpp

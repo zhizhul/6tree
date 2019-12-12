@@ -2,7 +2,7 @@
 //  function3_L.hpp
 //  6Tree
 //
-//  Created by Zhizhu Liu on 2019/3/2.
+//  Created by Zhizhu Liu on 2019/12/10.
 //
 
 #ifndef function3_L_hpp
