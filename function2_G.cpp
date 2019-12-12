@@ -24,50 +24,20 @@ using namespace std;
 
 int f2_get_base_num(int in_type)
 {
-    if (in_type == _INS_INB1)
-    {
-        return 2;
-    }
-    else if (in_type == _INS_INB2)
-    {
-        return 4;
-    }
-    else if (in_type == _INS_INB3)
-    {
-        return 8;
-    }
-    else if (in_type == _INS_INB4)
-    {
-        return 16;
-    }
-    else // in_type == _INS_INB5
-    {
-        return 32;
-    }
+    if (in_type == _INS_INB1) return 2; 
+    else if (in_type == _INS_INB2) return 4; 
+    else if (in_type == _INS_INB3) return 8; 
+    else if (in_type == _INS_INB4) return 16; 
+    else return 32; // in_type == _INS_INB5
 }
 
 int f2_get_dimensionality(int base_num)
 {
-    if (base_num == 2)
-    {
-        return 128;
-    }
-    else if (base_num == 4)
-    {
-        return 64;
-    }
-    else if (base_num == 8)
-    {
-        return 42;
-    }
-    else if (base_num == 16)
-    {
-        return 32;
-    }
-    else // base_num == 32
-    {
-        return 25;
-    }
+    if (base_num == 2) return 128; 
+    else if (base_num == 4) return 64; 
+    else if (base_num == 8) return 42; 
+    else if (base_num == 16) return 32; 
+    else return 25; // base_num == 32
 }
 
 void f2_DHC(int base_num, struct SpaceTreeNode *node, string *arr, int &node_num)
@@ -375,22 +345,10 @@ void f2_access(int argc, const char * argv[])
     int type3 = f1_type_ins(string(argv[4]));
     int pool_ins_in = 0;
     int pool_ins_out = 0;
-    if (type1 >= _INS_INB1 && type1 <= _INS_INB5)
-    {
-        pool_ins_in++;
-    }
-    if (type3 >= _INS_INB1 && type3 <= _INS_INB5)
-    {
-        pool_ins_in++;
-    }
-    if (type1 == _INS_OUTTREE)
-    {
-        pool_ins_out++;
-    }
-    if (type3 == _INS_OUTTREE)
-    {
-        pool_ins_out++;
-    }
+    if (type1 >= _INS_INB1 && type1 <= _INS_INB5) pool_ins_in++; 
+    if (type3 >= _INS_INB1 && type3 <= _INS_INB5) pool_ins_in++; 
+    if (type1 == _INS_OUTTREE) pool_ins_out++; 
+    if (type3 == _INS_OUTTREE) pool_ins_out++; 
     if (pool_ins_in != 1 || pool_ins_out != 1)
     {
         cout << "[Error] Function instruction is incorrect." << endl;

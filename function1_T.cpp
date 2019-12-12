@@ -54,94 +54,28 @@ vector<string> f1_str_split(string &s, const char &c)
 int f1_type_ins(string ins)
 {
     // Analyze the type of the instruction.
-    if (ins == "-in-std")
-    {
-        return _INS_INSTD;
-    }
-    if (ins == "-in-b1")
-    {
-        return _INS_INB1;
-    }
-    if (ins == "-in-b2")
-    {
-        return _INS_INB2;
-    }
-    if (ins == "-in-b3")
-    {
-        return _INS_INB3;
-    }
-    if (ins == "-in-b4")
-    {
-        return _INS_INB4;
-    }
-    if (ins == "-in-b5")
-    {
-        return _INS_INB5;
-    }
-    if (ins == "-out-std")
-    {
-        return _INS_OUTSTD;
-    }
-    if (ins == "-out-b1")
-    {
-        return _INS_OUTB1;
-    }
-    if (ins == "-out-b2")
-    {
-        return _INS_OUTB2;
-    }
-    if (ins == "-out-b3")
-    {
-        return _INS_OUTB3;
-    }
-    if (ins == "-out-b4")
-    {
-        return _INS_OUTB4;
-    }
-    if (ins == "-out-b5")
-    {
-        return _INS_OUTB5;
-    }
-    if (ins == "-out-tree")
-    {
-        return _INS_OUTTREE;
-    }
-    if (ins == "-in-tree")
-    {
-        return _INS_INTREE;
-    }
-    if (ins == "-test-std")
-    {
-        return _INS_TESTSTD;
-    }
-    if (ins == "-test-b1")
-    {
-        return _INS_TESTB1;
-    }
-    if (ins == "-test-b2")
-    {
-        return _INS_TESTB2;
-    }
-    if (ins == "-test-b3")
-    {
-        return _INS_TESTB3;
-    }
-    if (ins == "-test-b4")
-    {
-        return _INS_TESTB4;
-    }
-    if (ins == "-test-b5")
-    {
-        return _INS_TESTB5;
-    }
-    if (ins == "-out-res")
-    {
-        return _INS_OUTRES;
-    }
-    if (ins == "-ptl")
-    {
-        return _INS_PTL;
-    }
+    if (ins == "-in-std") return _INS_INSTD; 
+    if (ins == "-in-b1") return _INS_INB1; 
+    if (ins == "-in-b2") return _INS_INB2; 
+    if (ins == "-in-b3") return _INS_INB3; 
+    if (ins == "-in-b4") return _INS_INB4; 
+    if (ins == "-in-b5") return _INS_INB5; 
+    if (ins == "-out-std") return _INS_OUTSTD; 
+    if (ins == "-out-b1") return _INS_OUTB1; 
+    if (ins == "-out-b2") return _INS_OUTB2; 
+    if (ins == "-out-b3") return _INS_OUTB3; 
+    if (ins == "-out-b4") return _INS_OUTB4; 
+    if (ins == "-out-b5") return _INS_OUTB5; 
+    if (ins == "-out-tree") return _INS_OUTTREE; 
+    if (ins == "-in-tree") return _INS_INTREE; 
+    if (ins == "-test-std") return _INS_TESTSTD; 
+    if (ins == "-test-b1") return _INS_TESTB1; 
+    if (ins == "-test-b2") return _INS_TESTB2; 
+    if (ins == "-test-b3") return _INS_TESTB3; 
+    if (ins == "-test-b4") return _INS_TESTB4; 
+    if (ins == "-test-b5") return _INS_TESTB5; 
+    if (ins == "-out-res") return _INS_OUTRES; 
+    if (ins == "-config") return _INS_CONFIG; 
     return 0;
 }
 
@@ -870,22 +804,10 @@ void f1_access(int argc, const char * argv[])
     int type3 = f1_type_ins(string(argv[4]));
     int pool_ins_in = 0;
     int pool_ins_out = 0;
-    if (type1 >= _INS_INSTD && type1 <= _INS_INB5)
-    {
-        pool_ins_in++;
-    }
-    if (type3 >= _INS_INSTD && type3 <= _INS_INB5)
-    {
-        pool_ins_in++;
-    }
-    if (type1 >= _INS_OUTSTD && type1 <= _INS_OUTB5)
-    {
-        pool_ins_out++;
-    }
-    if (type3 >= _INS_OUTSTD && type3 <= _INS_OUTB5)
-    {
-        pool_ins_out++;
-    }
+    if (type1 >= _INS_INSTD && type1 <= _INS_INB5) pool_ins_in++; 
+    if (type3 >= _INS_INSTD && type3 <= _INS_INB5) pool_ins_in++; 
+    if (type1 >= _INS_OUTSTD && type1 <= _INS_OUTB5) pool_ins_out++; 
+    if (type3 >= _INS_OUTSTD && type3 <= _INS_OUTB5) pool_ins_out++; 
     if (pool_ins_in != 1 || pool_ins_out != 1)
     {
         cout << "[Error] Function instruction is incorrect." << endl;

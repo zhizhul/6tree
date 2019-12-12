@@ -1857,7 +1857,7 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     addr_total_res.close();
     scan_log.close();
     
-    // 3.4 Replease search tree data.
+    // 3.4 Release search tree data.
     f1_print_time();
     cout << "[Local test] Release search tree data." << endl;
     f3_release_search_tree(A);
@@ -1895,7 +1895,7 @@ void f3_access(int argc, const char * argv[])
 {
     // 6tree -L (-in-tree *tree folder name*) (-test-std/b* *test address file name*) (-out-res *result folder name*)
     
-    // 1. *test address file* store addresses which are hypothetical all active addresses. Must be sorted and unique.
+    // 1. *test address file* stores addresses which are hypothetical all active addresses. Must be sorted and unique.
     // 2. The base modes include binary (b2), quatenary (b2), ..., base-32 (b5). b3 omits the first two bits (00), b5 omits the first three bits (001).
     // 3. Local test doesn't include the alias detection.
     
@@ -1914,42 +1914,15 @@ void f3_access(int argc, const char * argv[])
     int pool_ins_test = 0;
     int pool_ins_out = 0;
     
-    if (type1 == _INS_INTREE)
-    {
-        pool_ins_dir++;
-    }
-    if (type3 == _INS_INTREE)
-    {
-        pool_ins_dir++;
-    }
-    if (type5 == _INS_INTREE)
-    {
-        pool_ins_dir++;
-    }
-    if (type1 >= _INS_TESTSTD && type1 <= _INS_TESTB5)
-    {
-        pool_ins_test++;
-    }
-    if (type3 >= _INS_TESTSTD && type3 <= _INS_TESTB5)
-    {
-        pool_ins_test++;
-    }
-    if (type5 >= _INS_TESTSTD && type5 <= _INS_TESTB5)
-    {
-        pool_ins_test++;
-    }
-    if (type1 == _INS_OUTRES)
-    {
-        pool_ins_out++;
-    }
-    if (type3 == _INS_OUTRES)
-    {
-        pool_ins_out++;
-    }
-    if (type5 == _INS_OUTRES)
-    {
-        pool_ins_out++;
-    }
+    if (type1 == _INS_INTREE) pool_ins_dir++; 
+    if (type3 == _INS_INTREE) pool_ins_dir++; 
+    if (type5 == _INS_INTREE) pool_ins_dir++; 
+    if (type1 >= _INS_TESTSTD && type1 <= _INS_TESTB5) pool_ins_test++; 
+    if (type3 >= _INS_TESTSTD && type3 <= _INS_TESTB5) pool_ins_test++; 
+    if (type5 >= _INS_TESTSTD && type5 <= _INS_TESTB5) pool_ins_test++; 
+    if (type1 == _INS_OUTRES) pool_ins_out++; 
+    if (type3 == _INS_OUTRES) pool_ins_out++; 
+    if (type5 == _INS_OUTRES) pool_ins_out++; 
     if (pool_ins_dir != 1 || pool_ins_test != 1 || pool_ins_out != 1)
     {
         cout << "[Error] Function instruction is incorrect." << endl;

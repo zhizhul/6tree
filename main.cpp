@@ -14,6 +14,7 @@
 #include "function1_T.hpp"
 #include "function2_G.hpp"
 #include "function3_L.hpp"
+#include "function4_R.hpp"
 
 using namespace std;
 
@@ -44,10 +45,9 @@ int work(int argc, const char * argv[])
                 f3_access(argc, argv);
                 break;
             case 'R':
-                // 基于空间树展开真实扫描（会检查是否ZMapv6可运行，会检查放置结果的文件夹是否不存在或者存在且非空=>改为仅配置接口）：
-                // 6tree -R -in-tree *输入文件夹名* -ptl *采用的协议参数，要与ZMapv6设置一致* -out-res *放置扫描结果的文件夹名*
-                
-                // -- need work
+                // Real Internet-wide search based on space tree:
+                // 6tree -R (-in-tree *tree folder name*) (-config *scan configuration file name *) (-out-res *result folder name*)
+                f4_access(argc, argv);
                 break;
             default:
                 // Analyze the first instruction, if it's not T/G/L/R, exit.

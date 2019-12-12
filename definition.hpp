@@ -35,7 +35,7 @@ using namespace std;
 #define _INS_TESTB4 19 // -test-b4
 #define _INS_TESTB5 20 // -test-b5
 #define _INS_OUTRES 21 // -out-res
-#define _INS_PTL 22 // -ptl
+#define _INS_CONFIG 22 // -config
 
 // Space tree node
 struct SpaceTreeNode
