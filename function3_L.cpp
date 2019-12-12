@@ -899,7 +899,7 @@ void f3_renew_NDA(struct RegionTreeNode **regn_forest, int regn_tree_num, string
 
 int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
 {
-    // Compare the density: NDA_1/|SS_1| > NDA_2/|SS_2|
+    // Compare the density: log(NDA_1/|SS_1|) > log(NDA_2/|SS_2|)
 
     int dimensionality = f2_get_dimensionality(base_num);
     
@@ -920,7 +920,7 @@ int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
         }
         SS_scale += pow(base_num, star_num);
     }
-    double den1 = (double )NDA / (double )SS_scale;
+    double log_den1 = log((double )NDA) - log((double )SS_scale);
 
     spe_node = se_node2->node;
     NDA = spe_node->NDA;
@@ -939,9 +939,9 @@ int f3_density_cmp(struct SequenceNode *se_node1, struct SequenceNode *se_node2)
         }
         SS_scale += pow(base_num, star_num);
     }
-    double den2 = (double )NDA / (double )SS_scale;
+    double log_den2 = log((double )NDA) - log((double )SS_scale);
 
-    return den1 > den2;
+    return log_den1 > log_den2;
 }
 
 int f3_regn_cmp(struct RegionTreeNode *node1, struct RegionTreeNode *node2)
@@ -1695,8 +1695,9 @@ double f3_calc_density(struct PreparedSpaceTreeNode *node)
             star_num++;
         }
     }
-    int scale = pow(base_num, star_num);
-    double density = (double )NDA / (double )scale;
+    
+    double log_density = log((double )NDA) - ((double )star_num) * log((double )base_num);
+    double density = exp(log_density);
     return density;
 }
 
