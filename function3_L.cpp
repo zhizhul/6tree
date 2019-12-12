@@ -511,7 +511,7 @@ struct SearchTreeNode *f3_prepare_test_data(string testfile_name, int test_type,
 void f3_read_local_scan_parameters(int &budget, int &itn_budget, string treedir_name)
 {
     ifstream treefile;
-    treefile.open("./" + treedir_name + "/" + _PAR_FILE);
+    treefile.open("./" + treedir_name + "/" + _BUD_FILE);
     
     // The budget.
     string line;

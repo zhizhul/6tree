@@ -21,7 +21,7 @@
 #include "function2_G.hpp"
 #include "function3_L.hpp"
 #include "function4_R.hpp"
-#include "function4_scan_interface.hpp"
+#include "scanner_interface.hpp"
 
 using namespace std;
 

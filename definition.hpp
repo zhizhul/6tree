@@ -58,8 +58,8 @@ struct SpaceTreeNode
 #define _TREE_FILE "tree_info"
 // File name of vector sequence
 #define _ARR_FILE "vec_seq_info"
-// File name of scan parameters
-#define _PAR_FILE "scan_parameters"
+// File name of budget parameters
+#define _BUD_FILE "budget_parameters"
 
 // Pre-defined budget
 #define _SCAN_BUDGET 10000000

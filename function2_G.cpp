@@ -225,7 +225,7 @@ void f2_output_scan_parameter(string outdir_name)
     // Output pre-defined scan parameters into the configuration file.
     // Users can adjust parameters in the file.
     ofstream outfile;
-    outfile.open("./" + outdir_name + "/" + _PAR_FILE);
+    outfile.open("./" + outdir_name + "/" + _BUD_FILE);
     outfile << "budget : " << _SCAN_BUDGET << endl;
     outfile << "step_budget : " << _SCAN_STEP_BUDGET << endl;
     outfile.close();

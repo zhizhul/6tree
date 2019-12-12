@@ -1,5 +1,5 @@
 //
-//  function4_scan_interface.cpp
+//  scanner_interface.cpp
 //  6Tree
 //
 //  Created by Zhizhu Liu on 2019/12/12.
@@ -21,8 +21,8 @@
 #include "function2_G.hpp"
 #include "function3_L.hpp"
 #include "function4_R.hpp"
-#include "function4_scan_interface.hpp"
-
-// -- need work: 提供真实互联网扫描并返回结果的能力
+#include "scanner_interface.hpp"
 
 using namespace std;
+
+// -- need work: 接口提供真实互联网扫描并返回结果的能力，并提供相关的扫描器参数配置。
