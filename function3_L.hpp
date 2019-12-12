@@ -100,11 +100,15 @@ void f3_release_pspace_tree(struct PreparedSpaceTreeNode *node);
 
 void f3_release_search_tree(struct SearchTreeNode *node);
 
-void f3_clear_NDA(struct PreparedSpaceTreeNode *node);
+int f3_clear_NDA(struct PreparedSpaceTreeNode *node);
 
 void f3_count_NDA(ifstream &addr_total_res_read, struct PreparedSpaceTreeNode *root);
 
-void f3_output_iris(ofstream &iris_res, struct PreparedSpaceTreeNode *root);
+void f3_store_node(struct PreparedSpaceTreeNode **node_arr, int &node_arr_scale, struct PreparedSpaceTreeNode *node);
+
+double f3_calc_density(struct PreparedSpaceTreeNode *node);
+
+void f3_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNode *root);
 
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6);
 

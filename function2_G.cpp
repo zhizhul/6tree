@@ -234,6 +234,7 @@ void f2_output_tree(struct SpaceTreeNode *root, int node_num, int in_type, strin
         outfile << num << ", " << inf << ", " << sup << ", " << parent_num << ", " << children_num << endl;
     }
     outfile.close();
+    
     delete [] node_arr;
 }
 

@@ -1620,8 +1620,11 @@ void f3_release_search_tree(struct SearchTreeNode *node)
     delete node;
 }
 
-void f3_clear_NDA(struct PreparedSpaceTreeNode *node)
+int f3_clear_NDA(struct PreparedSpaceTreeNode *node)
 {
+    // Clear the NDA of each space tree node to zero, also return the number of nodes.
+
+    int node_num = 1;
     node->NDA = 0;
     
     if (node->children_num != 0)
@@ -1629,13 +1632,16 @@ void f3_clear_NDA(struct PreparedSpaceTreeNode *node)
         int children_num = node->children_num;
         for (int i = 0; i < children_num; i++)
         {
-            f3_clear_NDA(node->children[i]);
+            node_num += f3_clear_NDA(node->children[i]);
         }
     }
+    return node_num;
 }
 
 void f3_count_NDA(ifstream &addr_total_res_read, struct PreparedSpaceTreeNode *root)
 {
+    // Update the NDA of each space tree node.
+
     string line;
     while (getline(addr_total_res_read, line))
     {
@@ -1663,15 +1669,68 @@ void f3_count_NDA(ifstream &addr_total_res_read, struct PreparedSpaceTreeNode *r
     }
 }
 
-void f3_output_iris(ofstream &iris_res, struct PreparedSpaceTreeNode *root)
+void f3_store_node(struct PreparedSpaceTreeNode **node_arr, int &node_arr_scale, struct PreparedSpaceTreeNode *node)
 {
-    // -- need work，依次输出结点信息，其中density可以直接计算
-    
-    // base_num :
-    // node_num :
-    // num, inf, sup, parent_num, children_num, subspace, NDA, density
-    // ...
-    
+    int children_num = node->children_num;
+    for (int i = 0; i < children_num; i++)
+    {
+        node_arr[node_arr_scale++] = node->children[i];
+    }
+    for (int i = 0; i < children_num; i++)
+    {
+        f3_store_node(node_arr, node_arr_scale, node->children[i]);
+    }
+}
+
+double f3_calc_density(struct PreparedSpaceTreeNode *node)
+{
+    int dimensionality = f2_get_dimensionality(base_num);
+
+    int NDA = node->NDA;
+    int star_num = 0;
+    for (int i = 0; i < dimensionality; i++)
+    {
+        if (node->subspace[i] == '*')
+        {
+            star_num++;
+        }
+    }
+    int scale = pow(base_num, star_num);
+    double density = (double )NDA / (double )scale;
+    return density;
+}
+
+void f3_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNode *root)
+{
+    // Output the visualization information, based on the space tree structure.
+
+    // 1. Store tree nodes into the array.
+    struct PreparedSpaceTreeNode **node_arr = new struct PreparedSpaceTreeNode *[node_num + 10];
+    int node_arr_scale = 0;
+    node_arr[node_arr_scale++] = root;
+    f3_store_node(node_arr, node_arr_scale, root);
+
+    // 2. Output iris information to the file.
+    iris_res << "base_num : " << base_num << endl;
+    iris_res << "node_num : " << node_num << endl;
+    iris_res << "num, inf, sup, parent_num, children_num, nda, density, subspace" << endl;
+    iris_res << "1, " << root->inf << ", " << root->sup << ", 0, " << root->children_num << ", " << root->NDA;
+    iris_res << ", " << f3_calc_density(root) << ", " << root->subspace << endl;
+    for (int i = 1; i < node_num; i++)
+    {
+        int num = i + 1;
+        int inf = node_arr[i]->inf;
+        int sup = node_arr[i]->sup;
+        int parent_num = node_arr[i]->parent->number;
+        int children_num = node_arr[i]->children_num;
+        int nda = node_arr[i]->NDA;
+        double density = f3_calc_density(node_arr[i]);
+        string subspace = node_arr[i]->subspace;
+        iris_res << num << ", " << inf << ", " << sup << ", " << parent_num << ", " << children_num << ", " << nda;
+        iris_res << ", " << density << ", " << subspace << endl;
+    }
+
+    delete [] node_arr;
 }
 
 void f3_work(int type1, string str2, int type3, string str4, int type5, string str6)
@@ -1808,14 +1867,14 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     // 3.5 Output iris information.
     f1_print_time();
     cout << "[Local test] Output visualization information." << endl;
-    f3_clear_NDA(root);
+    int node_num = f3_clear_NDA(root);
     ifstream addr_total_res_read;
     addr_total_res_read.open(res_dir_str + "/" + _RES_FILE);
     f3_count_NDA(addr_total_res_read, root);
     addr_total_res_read.close();
     ofstream iris_res;
     iris_res.open(res_dir_str + "/" + _IRIS_FILE);
-    f3_output_iris(iris_res, root);
+    f3_output_iris(iris_res, node_num, root);
     iris_res.close();
     f1_print_time();
     cout << "[Local test] Output visualization information finished." << endl;
