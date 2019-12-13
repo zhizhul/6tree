@@ -25,6 +25,30 @@
 
 using namespace std;
 
+struct SequenceNode *f4_network_feedback(struct RegionTreeNode **regn_forest, int regn_tree_num, struct SequenceNode *xi_h)
+{
+    // 1. Renew TSs and SSs of space tree nodes in xi_h.
+    struct SequenceNode *xi_ptr = xi_h;
+    while (xi_ptr != NULL)
+    {
+        struct PreparedSpaceTreeNode *spe_node = xi_ptr->node;
+        f3_copy_TS2SS(spe_node);
+        int dimension = f3_DS_pop(spe_node);
+        f3_TS_expand(spe_node, dimension);
+        xi_ptr = xi_ptr->next;
+    }
+
+    // 2. Read active addresses from active_addrs, renew NDAs of sapce tree nodes in xi_h.
+
+    // 2.1 Sort detected active addresses.
+
+    // 2.2 Sort region trees based on their region expressions.
+
+    // 2.3 Perform the renew operation.
+
+    // 3. Resort space tree nodes of xi_h, based on NDA/|SS|.
+}
+
 int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log)
 {
     // 1. Prepare the target address set C, represented as a region tree forest.
@@ -51,13 +75,20 @@ int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &
     
     // 2. Perform the scan and renew budget and addr_total_res.
     
-    si_network_scan(regn_forest, TS_num, budget, addr_total_res);
+    int active_addr_num = si_network_scan(regn_forest, TS_num, budget, addr_total_res);
 
     // 3. Renew information of nodes in xi_h, and resort xi_h.
+
+    struct SequenceNode *new_xi_h = f4_network_feedback(regn_forest, TS_num, xi_h);
+    xi_h = new_xi_h
+
     // -- need work
+    // f1_print_time...
 
     // 4. Epilogue.
-    // -- need work
+    // -- need work:注意targets.txt和result.txt应该都是要删除的
+
+    return active_addr_num;
 }
 
 void f4_work(int type1, string str2, int type3, string str4)
@@ -121,6 +152,7 @@ void f4_work(int type1, string str2, int type3, string str4)
     scan_log << endl << "Pre scanning finished." << endl;
 
     // 3.3 Iterative scanning, until using out the budget.
+    // -- need work here
 
     addr_total_res.close();
 

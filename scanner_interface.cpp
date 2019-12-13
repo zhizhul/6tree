@@ -96,14 +96,140 @@ void si_read_scanner_command(string treedir_name)
     pfile.close();
 }
 
-void si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res)
+void si_write_targets(string *arr, int &arr_idx, string expression, int start_idx, int dimensionality)
 {
-    // 根据区树森林写入目标地址集到_SI_STEP_TF_FILE文件中
+    // Be used in scanner_interface.cpp
 
-    // 调用命令行，启动扫描器命令执行扫描
+    int idx;
+    for (idx = start_idx; idx < dimensionality; idx++)
+    {
+        if (expression[idx] == '*')
+        {
+            break;
+        }
+    }
+    if (idx == dimensionality)
+    {
+        arr[arr_idx++] = expression;
+        return ;
+    }
+    for (int i = 0; i < base_num; i++)
+    {
+        if (i < 10)
+        {
+            expression[idx] = '0' + i;
+        }
+        else // i >= 10
+        {
+            expression[idx] = 'a' + i - 10;
+        }
+        si_write_targets(arr, arr_idx, expression, idx + 1, dimensionality);
+    }
+}
 
-    // 收集结果到数组中，进行排序去重，然后更新收集结果文件，更新addr_total_res，减预算。
+void si_write_on_leaf_nodes(string *arr, int &arr_idx, struct RegionTreeNode *node)
+{
+    // Be used in scanner_interface.cpp
 
-    // ----
+    if (node->is_leaf == true)
+    {
+        int dimensionality = f2_get_dimensionality(base_num);
+        si_write_targets(arr, arr_idx, node->expression, 0, dimensionality);
+    }
+    for (int i = 0; i < node->children_num; i++)
+    {
+        if (node->children[i] != NULL)
+        {
+            si_write_on_leaf_nodes(arr, arr_idx, node->children[i]);
+        }
+    }
+}
+
+int si_TSs_scale(struct RegionTreeNode **regn_forest, int tree_num)
+{
+    // Be used in scanner_interface.cpp
+
+    int target_num = 0;
+    int dimensionality = f2_get_dimensionality(base_num);
+    for (int i = 0; i < tree_num; i++)
+    {
+        int star_num = 0;
+        string expr = regn_forest[i]->expression;
+        for (int j = 0; j < dimensionality; j++)
+        {
+            if (expr[j] == '*')
+            {
+                star_num++;
+            }
+        }
+        target_num += pow(base_num, star_num);
+    }
+    return target_num;
+}
+
+int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res)
+{
     // Be used in function4_R.cpp.
+
+    // Return the number of discovered addresses.
+
+    // Write targets into _SI_STEP_TF_FILE and deduct the budget.
+    int TSs_scale = si_TSs_scale(regn_forest, tree_num);
+    string *arr = new string [TSs_scale];
+    int arr_idx = 0;
+    for (int i = 0; i < tree_num; i++)
+    {
+        si_write_on_leaf_nodes(arr, arr_idx, regn_forest[i]);
+    }
+    int arr_scale = arr_idx;
+
+    // -- need work: 到时候可以用Xcode检查一下，看地址的输出是否正常，arr_idx的运行是否正常
+    // -- below is test code
+    cout << "the scale is: " << arr_scale << endl;
+    // -- up is test code
+    budget -= arr_scale;
+
+    si_RandomGenerator sg;
+    random_shuffle(arr, arr + arr_scale, sg);
+    ofstream target_file;
+    target_file.open(_SI_STEP_TF_FILE);
+    for (int i = 0; i < arr_scale; i++)
+    {
+        target_file << f3_addr_tran_std(arr[i]) << endl;
+    }
+    target_file.close();
+
+    // Call the scanner ZMapv6 to search active addresses.
+    // -- need work: 测试的时候可以把这个代码注释掉，那么就可以进行本地测试，看正常工作能力。
+    system(scanner_cmd.c_str());
+
+    // Sort and unique the search result, since some addresses might be repeated (multi response packets).
+    string line;
+    ifstream res_file_read;
+    res_file_read.open(_SI_STEP_RES_FILE);
+    arr_scale = 0;
+    while (getline(res_file_read, line))
+    {
+        arr[arr_scale++] = f1_std_tran_b4(line);
+    }
+    res_file_read.close();
+
+    sort(arr, arr + arr_scale, f1_str_cmp);
+    int new_arr_scale = (int )(unique(arr, arr + arr_scale) - arr);
+    arr_scale = new_arr_scale;
+
+    ofstream res_file_write;
+    res_file_write.open(_SI_STEP_RES_FILE);
+    for (int i = 0; i < arr_scale; i++)
+    {
+        string std_str = f1_b4_tran_std(arr[i]);
+        res_file_write << std_str << endl;
+        addr_total_res << std_str << endl;
+    }
+    res_file_write.close();
+
+    delete [] arr;
+
+    int NDA = add_scale;
+    return NDA;
 }

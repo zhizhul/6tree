@@ -959,8 +959,8 @@ struct SequenceNode *f3_local_feedback(struct RegionTreeNode **regn_forest, int 
     {
         struct PreparedSpaceTreeNode *spe_node = xi_ptr->node;
         f3_copy_TS2SS(spe_node);
-        int dimen = f3_DS_pop(spe_node);
-        f3_TS_expand(spe_node, dimen);
+        int dimension = f3_DS_pop(spe_node);
+        f3_TS_expand(spe_node, dimension);
         xi_ptr = xi_ptr->next;
     }
 
