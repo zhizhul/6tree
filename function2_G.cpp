@@ -19,6 +19,7 @@
 #include "definition.hpp"
 #include "function1_T.hpp"
 #include "function2_G.hpp"
+#include "scanner_interface.hpp"
 
 using namespace std;
 
@@ -220,9 +221,9 @@ void f2_output_arr(string *arr, int arr_scale, string outdir_name)
     outfile.close();
 }
 
-void f2_output_scan_parameter(string outdir_name)
+void f2_output_budget_parameters(string outdir_name)
 {
-    // Output pre-defined scan parameters into the configuration file.
+    // Output pre-defined budget parameters into the configuration file.
     // Users can adjust parameters in the file.
     ofstream outfile;
     outfile.open("./" + outdir_name + "/" + _BUD_FILE);
@@ -284,17 +285,6 @@ void f2_work(int type1, string str2, int type3, string str4)
     f1_print_time();
     cout << "[Generation] Input data finished." << endl;
     
-    /* // Sort and unique vectors.
-     f1_print_time();
-     cout << "[Generation] Sort and unique." << endl;
-     sort(arr, arr + arr_scale, f1_str_cmp);
-     int new_arr_scale;
-     new_arr_scale = (int)(unique(arr, arr + arr_scale) - arr);
-     arr_scale = new_arr_scale;
-     f1_print_time();
-     cout << "[Generation] Sort and unique finished." << endl;
-     */
-    
     // Generate space tree.
     f1_print_time();
     cout << "[Generation] Generation." << endl;
@@ -316,8 +306,11 @@ void f2_work(int type1, string str2, int type3, string str4)
     f2_release_tree(root);
     delete[] arr;
     
-    // Output pre-defined scan parameters.
-    f2_output_scan_parameter(outdir_name);
+    // Output pre-defined budget parameters.
+    f2_output_budget_parameters(outdir_name);
+
+    // Output pre-defined scanner parameters.
+    si_output_scanner_parameters(outdir_name);
     
     f1_print_time();
     cout << "[Generation] Output data finished." << endl;
@@ -345,10 +338,12 @@ void f2_access(int argc, const char * argv[])
     int type3 = f1_type_ins(string(argv[4]));
     int pool_ins_in = 0;
     int pool_ins_out = 0;
+
     if (type1 >= _INS_INB1 && type1 <= _INS_INB5) pool_ins_in++; 
     if (type3 >= _INS_INB1 && type3 <= _INS_INB5) pool_ins_in++; 
     if (type1 == _INS_OUTTREE) pool_ins_out++; 
     if (type3 == _INS_OUTTREE) pool_ins_out++; 
+    
     if (pool_ins_in != 1 || pool_ins_out != 1)
     {
         cout << "[Error] Function instruction is incorrect." << endl;

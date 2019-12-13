@@ -25,21 +25,16 @@
 
 using namespace std;
 
-void f4_work(int type1, string str2, int type3, string str4, int type5, string str6)
+void f4_work(int type1, string str2, int type3, string str4)
 {
     // 1. Analyze instructions.
     string treedir_name;
-    string config_name;
     string outres_name;
+
     if (type1 == _INS_INTREE) treedir_name = str2; 
-    else if (type3 == _INS_INTREE) treedir_name = str4; 
-    else treedir_name = str6; // type5 == _INS_INTREE
-    if (type1 == _INS_CONFIG) config_name = str2; 
-    else if (type3 == _INS_CONFIG) config_name = str4; 
-    else config_name = str6; // type5 == _INS_CONFIG 
+    else treedir_name = str4; // type3 == _INS_INTREE
     if (type1 == _INS_OUTRES) outres_name = str2; 
-    else if (type3 == _INS_OUTRES) outres_name = str4; 
-    else outres_name = str6; // type5 == _INS_OUTRES
+    else outres_name = str4; // type3 == _INS_OUTRES
 
     f1_print_time();
     cout << "[Network scan] Start network scan." << endl;
@@ -58,11 +53,18 @@ void f4_work(int type1, string str2, int type3, string str4, int type5, string s
     f1_print_time();
     cout << "[Network scan] Prepare space tree finished." << endl;
 
-    // 2.2 Configure the scanner parameters, e.g., the command line parameters.
+    // 2.2 Configure the scanner parameters, i.e., the command line parameters.
+    f1_print_time();
+    cout << "[Network scan] Read scanner parameters." << endl;
+
+    si_read_scanner_parameters(treedir_name);
+
+    f1_print_time();
+    cout << "[Network scan] Read scanner parameters finished." << endl;
 
     // 3. Run active address search on the net.
 
-    // 3.1 Configure the scan parameters, e.g., the budget.
+    // 3.1 Configure the budget parameters.
 
     // 3.2 Pre-scanning.
 
@@ -78,12 +80,9 @@ void f4_work(int type1, string str2, int type3, string str4, int type5, string s
 
 void f4_access(int argc, const char * argv[])
 {
-    // 6tree -R (-in-tree *tree folder name*) (-config *scan configuration file name *) (-out-res *result folder name*)
+    // 6tree -R (-in-tree *tree folder name*) (-out-res *result folder name*)
 
-    // 1. *scan configuration file* stores real-scan configuration information defined by programmers.
-    // 2. Real scan includes the alias detection.
-
-    if (argc != 8)
+    if (argc != 6)
     {
         cout << "[Error] Function instruction is incorrect." << endl;
         return;
@@ -92,28 +91,21 @@ void f4_access(int argc, const char * argv[])
     // Check instruction correctness.
     int type1 = f1_type_ins(string(argv[2]));
     int type3 = f1_type_ins(string(argv[4]));
-    int type5 = f1_type_ins(string(argv[6]));
 
     int pool_ins_dir = 0;
-    int pool_ins_con = 0;
     int pool_ins_out = 0;
 
     if (type1 == _INS_INTREE) pool_ins_dir++;
-    if (type3 == _INS_INTREE) pool_ins_dir++; 
-    if (type5 == _INS_INTREE) pool_ins_dir++; 
-    if (type1 == _INS_CONFIG) pool_ins_con++; 
-    if (type3 == _INS_CONFIG) pool_ins_con++; 
-    if (type5 == _INS_CONFIG) pool_ins_con++; 
-    if (type1 == _INS_OUTRES) pool_ins_out++; 
-    if (type3 == _INS_OUTRES) pool_ins_out++; 
-    if (type5 == _INS_OUTRES) pool_ins_out++;
+    if (type3 == _INS_INTREE) pool_ins_dir++;
+    if (type1 == _INS_OUTRES) pool_ins_out++;
+    if (type3 == _INS_OUTRES) pool_ins_out++;
 
-    if (pool_ins_dir != 1 || pool_ins_con != 1 || pool_ins_out != 1)
+    if (pool_ins_dir != 1 || pool_ins_out != 1)
     {
         cout << "[Error] Function instruction is incorrect." << endl;
         return;
     }
 
     // Start the real scan.
-    f4_work(type1, string(argv[3]), type3, string(argv[5]), type5, string(argv[7]));
+    f4_work(type1, string(argv[3]), type3, string(argv[5]));
 }

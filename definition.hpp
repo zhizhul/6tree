@@ -60,6 +60,8 @@ struct SpaceTreeNode
 #define _ARR_FILE "vec_seq_info"
 // File name of budget parameters
 #define _BUD_FILE "budget_parameters"
+// File name of scanner parameters
+#define _SCANNER_FILE "scanner_parameters"
 
 // Pre-defined budget
 #define _SCAN_BUDGET 10000000
@@ -137,7 +139,7 @@ struct SequenceNode
 // Search tree node for local test, storing information about known all addresses
 struct SearchTreeNode
 {
-    // Number of active addresses in the region of the node, -- need work: 代码写完后检查一下，这里面有些数据可能用不到（比如说level），就可以删去了
+    // Number of active addresses in the region of the node.
     int NAA;
     // Level of the node, the root node level is 0.
     int level;

@@ -46,7 +46,7 @@ int work(int argc, const char * argv[])
                 break;
             case 'R':
                 // Real Internet-wide search based on space tree:
-                // 6tree -R (-in-tree *tree folder name*) (-config *scan configuration file name *) (-out-res *result folder name*)
+                // 6tree -R (-in-tree *tree folder name*) (-out-res *result folder name*)
                 f4_access(argc, argv);
                 break;
             default:

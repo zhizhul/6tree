@@ -508,7 +508,7 @@ struct SearchTreeNode *f3_prepare_test_data(string testfile_name, int test_type,
     return search_root;
 }
 
-void f3_read_local_scan_parameters(int &budget, int &itn_budget, string treedir_name)
+void f3_read_local_budget_parameters(int &budget, int &itn_budget, string treedir_name)
 {
     ifstream treefile;
     treefile.open("./" + treedir_name + "/" + _BUD_FILE);
@@ -1809,9 +1809,9 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     
     // 3. Run local simulation search.
     
-    // 3.1 Configure the scan parameters.
+    // 3.1 Configure the budget parameters.
     int budget, itn_budget;
-    f3_read_local_scan_parameters(budget, itn_budget, treedir_name);
+    f3_read_local_budget_parameters(budget, itn_budget, treedir_name);
     
     // 3.2 Pre-scanning.
     string res_dir_str = "./" + outres_name;

@@ -5,6 +5,8 @@
 //  Created by Zhizhu Liu on 2019/12/12.
 //
 
+// Define scanner interface functions in the file.
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -25,4 +27,32 @@
 
 using namespace std;
 
-// -- need work: 接口提供真实互联网扫描并返回结果的能力，并提供相关的扫描器参数配置。
+void si_read_scanner_parameters(string treedir_name)
+{
+    ifstream pfile;
+    pfile.open("./" + treedir_name + "/" + _SCANNER_FILE);
+    // -- need work: 写到了这里。
+    pfile.close();
+}
+
+void si_output_scanner_parameters(string outdir_name)
+{
+    // Be used in function2_G.cpp
+
+    // Output pre-defined scanner parameters into the configuration file.
+    // Users can adjust parameters in the file, but incorrect adjustments might trigger errors.
+    
+    ofstream outfile;
+    outfile.open("./" + outdir_name + "/" + _SCANNER_FILE);
+
+    outfile << "app_name : " << _SI_APP_NAME << endl;
+    outfile << "ins_num : " << _SI_INS_NUM << endl;
+    outfile << _SI_INS_PM << endl;
+    outfile << _SI_INS_STEP_TF << endl;
+    outfile << _SI_INS_STEP_RES << endl;
+    outfile << _SI_INS_SIP << endl;
+    outfile << _SI_INS_BW << endl;
+    outfile << _SI_INS_CT << endl;
+
+    outfile.close();
+}
