@@ -508,7 +508,7 @@ struct SearchTreeNode *f3_prepare_test_data(string testfile_name, int test_type,
     return search_root;
 }
 
-void f3_read_local_budget_parameters(int &budget, int &itn_budget, string treedir_name)
+void f3_read_budget_parameters(int &budget, int &itn_budget, string treedir_name)
 {
     ifstream treefile;
     treefile.open("./" + treedir_name + "/" + _BUD_FILE);
@@ -1021,7 +1021,7 @@ struct SequenceNode *f3_local_feedback(struct RegionTreeNode **regn_forest, int 
 
 int f3_local_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log, struct SearchTreeNode *A)
 {
-    // 1. Prepare the target address set C.
+    // 1. Prepare the target address set C, represented as a region tree forest.
     
     // Count the number of TSs.
     int TS_num = 0;
@@ -1060,6 +1060,8 @@ int f3_local_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &ad
     scan_log << endl;
     scan_log << "find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
     
+    // 4. Epilogue.
+
     // Remove the file corresponding to active_addrs.
     remove(_STEP_RES_FILE);
     
@@ -1811,7 +1813,7 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
     
     // 3.1 Configure the budget parameters.
     int budget, itn_budget;
-    f3_read_local_budget_parameters(budget, itn_budget, treedir_name);
+    f3_read_budget_parameters(budget, itn_budget, treedir_name);
     
     // 3.2 Pre-scanning.
     string res_dir_str = "./" + outres_name;

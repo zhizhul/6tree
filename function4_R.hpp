@@ -10,6 +10,8 @@
 
 using namespace std;
 
+int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log);
+
 void f4_work(int type1, string str2, int type3, string str4);
 
 void f4_access(int argc, const char *argv[]);

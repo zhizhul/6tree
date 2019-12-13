@@ -310,7 +310,7 @@ void f2_work(int type1, string str2, int type3, string str4)
     f2_output_budget_parameters(outdir_name);
 
     // Output pre-defined scanner parameters.
-    si_output_scanner_parameters(outdir_name);
+    si_output_scanner_command(outdir_name);
     
     f1_print_time();
     cout << "[Generation] Output data finished." << endl;
