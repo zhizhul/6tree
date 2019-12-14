@@ -964,9 +964,9 @@ struct SequenceNode *f3_local_feedback(struct RegionTreeNode **regn_forest, int 
         xi_ptr = xi_ptr->next;
     }
 
-    // 2. Read active addresses from active_addrs, renew NDAs of space tree nodes in xi_h.
+    // 2. Read active addresses from active_addrs_read, renew NDAs of space tree nodes in xi_h.
     
-    // 2.1 Sort detected active addresses.
+    // 2.1 Get and sort detected active addresses.
     ifstream active_addrs_read;
     active_addrs_read.open(_STEP_RES_FILE);
     string line;
