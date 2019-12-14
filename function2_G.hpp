@@ -28,7 +28,7 @@ void f2_output_tree(struct SpaceTreeNode *root, int node_num, int in_type, strin
 
 void f2_output_arr(string *arr, int arr_scale, string outdir_name);
 
-void f2_output_budget_parameters(string outdir_name);
+void f2_output_search_parameters(string outdir_name);
 
 void f2_work(int type1, string str2, int type3, string str4);
 

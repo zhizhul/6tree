@@ -58,8 +58,8 @@ struct SpaceTreeNode
 #define _TREE_FILE "tree_info"
 // File name of vector sequence
 #define _ARR_FILE "vec_seq_info"
-// File name of budget parameters
-#define _BUD_FILE "budget_parameters"
+// File name of search parameters
+#define _SEARCH_FILE "search_parameters"
 // File name of scanner parameters
 #define _SCANNER_FILE "scanner_parameters"
 
@@ -67,6 +67,15 @@ struct SpaceTreeNode
 #define _SCAN_BUDGET 10000000
 // Pre-defined budget in each iteration
 #define _SCAN_STEP_BUDGET 2000000
+// Pre-defined probe number times in alias detection
+#define _SCAN_TIMES 10
+// Pre-defined, when TS scale is more than zeta, AAD will be checked for alias detection.
+#define _SCAN_ZETA 1024
+// Pre-defined, when TS scale is zeta, the alias detection will be triggered if AAD >= pi.
+// When TS scale > zeta, the alias detection will be triggered if AAD >= an inverse proportional function where pi and d_TS are parameters.  
+#define _SCAN_PI 0.9
+// Pre-defined critical point. After alias detection, if TS scale > the value, it will be regarded as an aliased region.
+#define _SCAN_CRIP 1048576
 
 // File name of discovered active addresses
 #define _RES_FILE "discovered_addrs"
@@ -176,5 +185,18 @@ struct RegionTreeNode
 
 // Base number, for instance, 16 in hexadecimal.
 extern int base_num;
+
+// Parameters in alias detection.
+struct AdetParameters
+{
+    // Probe number times in alias detection
+    int ptimes;
+    // When TS scale is more than zeta, AAD will be checked for alias detection.
+    double zeta;
+    // When TS scale is zeta, the alias detection will be triggered if AAD >= pi.
+    double pi;
+    // Critical point. After alias detection, if TS scale > the value, it will be regarded as an aliased region.
+    int crip;
+};
 
 #endif  /* definition_hpp */

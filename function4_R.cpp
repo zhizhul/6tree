@@ -41,7 +41,7 @@ struct SequenceNode *f4_network_feedback(struct RegionTreeNode **regn_forest, in
     // 2. Read active addresses from active_addrs_read, renew NDAs of sapce tree nodes in xi_h.
 
     // 2.1 Get detected active addresses.
-    // In default, the sort has been performed in si_network_scan() from scanner_interface.cpp.
+    // In default, the sort has been performed in scanner_interface.cpp=>si_network_scan().
     string *arr = new string [active_addr_num + 2];
     ifstream active_addrs_read;
     active_addrs_read.open(_SI_STEP_RES_FILE);
@@ -143,6 +143,171 @@ int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &
     return active_addr_num;
 }
 
+double f4_calc_thd(struct PreparedSpaceTreeNode *node, double adet_zeta, double adet_pi, int dimensionality)
+{
+    int star_num = 0;
+    string expr = node->TS.expressions[0];
+    for (int i = 0; i < dimensionality; i++)
+    {
+        if (expr[i] == '*')
+        {
+            star_num++;
+        }
+    }
+    double numerator = adet_pi * log(adet_zeta) * (128.0 * log(2.0) - (double )star_num * log((int )base_num));
+    double denominator = (128.0 * log(2.0) - log(adet_zeta)) * (double )star_num * log((double )base_num);
+    double thd = numerator / denominator;
+    return thd;
+}
+
+bool f4_is_potential(struct PreparedSpaceTreeNode *node, double adet_zeta, double adet_pi, int dimensionality)
+{
+    double AAD = f3_calc_density(node);
+    double thd = f4_calc_thd(node, adet_zeta, adet_pi, dimensionality);
+    if (AAD > thd)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+struct SequenceNode *f4_takeout_pnode(struct SequenceNode *&xi_h, double adet_zeta, double adet_pi)
+{
+    struct SequenceNode *ptr = xi_h;
+    int dimensionality = f2_get_dimensionality(base_num);
+    if (f4_is_potential(ptr->node, adet_zeta, adet_pi, dimensionality))
+    {
+        xi_h = xi_h->next;
+        return ptr;
+    }
+
+    struct SequenceNode *ptr_prev = xi_h;
+    ptr = ptr->next;
+    while (ptr != NULL)
+    {
+        if (f4_is_potential(ptr->node, adet_zeta, adet_pi, dimensionality))
+        {
+            ptr_prev->next = ptr->next;
+            return ptr;
+        }
+
+        ptr_prev = ptr;
+        ptr = ptr->next;
+    }
+    return ptr;
+}
+
+void f4_pnode_analysis
+(
+    struct SequenceNode *pnode, 
+    struct SequenceNode *&xi, 
+    struct SequenceNode *&xi_h, 
+    int &budget, 
+    struct AdetParameters adet_ps, 
+    ofstream &addr_total_res, 
+    int &addr_total_num, 
+    ofstream &scan_log, 
+    ofstream &ali_file
+)
+{
+    // -- need work
+
+    // 只要当xi_h中存在异常结点时，就继续别名探测。
+
+    // 拿出一个异常结点，对其TS随机选取出少量地址作为目标。同时扣除预算。地址数量结合base_num和adet_ptimes来确定。
+    // 那么这个目标集就不必作为区树森林来表示，而是用一般的数组就足够表示了。
+
+    // 调用扫描器扫描目标集，然后从结果文件中计算活跃地址的数量，只要不为0就继续探测，否则就结束。
+
+    // (新开一个函数)分情况处理，看是作为别名地址区还是正常地址区。
+
+    // 别名地址区就做记录并将结点保存到xi的最后面，同时更新其TS与SS（探测过的区域虽然没有完全扫描过，也变为SS）。
+
+    // 正常地址区就扫描TS-SS然后更新到xi中
+}
+
+void f4_alias_detection
+(
+    struct SequenceNode *&xi,
+    struct SequenceNode *&xi_h, 
+    int &budget, 
+    struct AdetParameters adet_ps, 
+    ofstream &addr_total_res, 
+    int &addr_total_num, 
+    ofstream &scan_log, 
+    ofstream &ali_file
+)
+{
+    struct SequenceNode *pnode = NULL;
+    pnode = f4_takeout_pnode(xi_h, adet_ps.zeta, adet_ps.pi);
+    while (pnode != NULL)
+    {
+        f4_pnode_analysis(pnode, xi, xi_h, budget, adet_ps, addr_total_res, addr_total_num, scan_log, ali_file);
+
+        pnode = f4_takeout_pnode(xi_h, adet_ps.zeta, adet_ps.pi);
+    }
+}
+
+void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParameters &adet_ps, string treedir_name)
+{
+    ifstream treefile;
+    treefile.open("./" + treedir_name + "/" + _SEARCH_FILE);
+    
+    // The budget.
+    string line;
+    getline(treefile, line);
+    vector<string> split_res = f1_str_split(line, ':');
+    string num_str = split_res[1];
+    f3_trim(num_str);
+    budget = atoi(num_str.c_str());
+    split_res.clear();
+    
+    // The step budget.
+    getline(treefile, line);
+    split_res = f1_str_split(line, ':');
+    num_str = split_res[1];
+    f3_trim(num_str);
+    itn_budget = atoi(num_str.c_str());
+    split_res.clear();
+
+    // The probe number times in alias detection.
+    getline(treefile, line);
+    split_res = f1_str_split(line, ':');
+    num_str = split_res[1];
+    f3_trim(num_str);
+    adet_ps.ptimes = atoi(num_str.c_str());
+    split_res.clear();
+
+    // The zeta.
+    getline(treefile, line);
+    split_res = f1_str_split(line, ':');
+    num_str = split_res[1];
+    f3_trim(num_str);
+    adet_ps.zeta = atof(num_str.c_str());
+    split_res.clear();
+
+    // The pi.
+    getline(treefile, line);
+    split_res = f1_str_split(line, ':');
+    num_str = split_res[1];
+    f3_trim(num_str);
+    adet_ps.pi = atof(num_str.c_str());
+    split_res.clear();
+
+    // The critical point.
+    getline(treefile, line);
+    split_res = f1_str_split(line, ':');
+    num_str = split_res[1];
+    f3_trim(num_str);
+    adet_ps.crip = atoi(num_str.c_str());
+    split_res.clear();
+    
+    treefile.close();
+}
+
 void f4_work(int type1, string str2, int type3, string str4)
 {
     // 1. Analyze instructions.
@@ -182,9 +347,10 @@ void f4_work(int type1, string str2, int type3, string str4)
 
     // 3. Run active address search on the net.
 
-    // 3.1 Configure the budget parameters.
+    // 3.1 Configure the search parameters.
     int budget, itn_budget;
-    f3_read_budget_parameters(budget, itn_budget, treedir_name);
+    struct AdetParameters adet_ps;
+    f4_read_search_parameters(budget, itn_budget, adet_ps, treedir_name);
 
     // 3.2 Pre-scanning.
     string res_dir_str = "./" + outres_name;
@@ -203,6 +369,9 @@ void f4_work(int type1, string str2, int type3, string str4)
     f3_print_time(scan_log);
     scan_log << endl << "Pre scanning finished." << endl;
 
+    ofstream ali_file;
+    ali_file.open(res_dir_str + "/" + _ALI_FILE);
+
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
     {
@@ -213,10 +382,10 @@ void f4_work(int type1, string str2, int type3, string str4)
         f3_replace_descendant(xi, xi_h);
 
         // 3.3.3 Alias detection.
-        // -- need work
-        f4_alias_detection(xi, xi_h, budget, addr_total_res, scan_log);
+        f4_alias_detection(xi, xi_h, budget, adet_ps, addr_total_res, addr_total_num, scan_log, ali_file);
 
         // 3.3.4 Scan and feedback.
+        // -- need work: 要注意，经过别名测量之后有可能xi_h变成了空集，因此可能要做与function3代码不同的处理。写完alias_detection之后要检查一下这个函数。
         addr_total_num += f4_network_scan_feedback(xi_h, budget, addr_total_res, scan_log);
 
         // 3.3.5 Merge sort.
@@ -231,6 +400,7 @@ void f4_work(int type1, string str2, int type3, string str4)
     scan_log << endl << "Total scanning finished." << endl;
     scan_log << "find total active addresses: " << addr_total_num << endl;
     addr_total_res.close();
+    ali_file.close();
     scan_log.close();
 
     // 3.4 Output iris information.
@@ -250,7 +420,11 @@ void f4_work(int type1, string str2, int type3, string str4)
 
     // 3.5 Release space tree and sequence data.
     f1_print_time();
-    
+    cout << "[Network search] Release space tree and sequence data." << endl;
+    f3_release_pspace_tree(root);
+    f3_release_seq(xi);
+    f1_print_time();
+    cout << "[Network search] Release space tree and sequence data finished." << endl;
 
     f1_print_time();
     cout << "[Network search] Network search finished." << endl;

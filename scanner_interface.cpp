@@ -34,7 +34,7 @@ string scanner_cmd;
 
 void si_output_scanner_command(string outdir_name)
 {
-    // Be used in function2_G.cpp.
+    // Be used in function2_G.cpp=>f2_work().
 
     // Output pre-defined scanner parameters into the configuration file.
     // Afterwards, users can adjust parameters in the file to generate a different scan command, but incorrect adjustments might trigger errors.
@@ -56,7 +56,7 @@ void si_output_scanner_command(string outdir_name)
 
 void si_read_scanner_command(string treedir_name)
 {
-    // Be used in function4_R.cpp.
+    // Be used in function4_R.cpp=>f4_work().
 
     // Read scanner parameters to generate a scan command for address search.
 
@@ -98,7 +98,7 @@ void si_read_scanner_command(string treedir_name)
 
 void si_write_targets(string *arr, int &arr_idx, string expression, int start_idx, int dimensionality)
 {
-    // Be used in scanner_interface.cpp
+    // Be used in scanner_interface.cpp=>si_write_on_leaf_nodes().
 
     int idx;
     for (idx = start_idx; idx < dimensionality; idx++)
@@ -129,7 +129,7 @@ void si_write_targets(string *arr, int &arr_idx, string expression, int start_id
 
 void si_write_on_leaf_nodes(string *arr, int &arr_idx, struct RegionTreeNode *node)
 {
-    // Be used in scanner_interface.cpp
+    // Be used in scanner_interface.cpp=>si_network_scan().
 
     if (node->is_leaf == true)
     {
@@ -147,7 +147,7 @@ void si_write_on_leaf_nodes(string *arr, int &arr_idx, struct RegionTreeNode *no
 
 int si_TSs_scale(struct RegionTreeNode **regn_forest, int tree_num)
 {
-    // Be used in scanner_interface.cpp
+    // Be used in scanner_interface.cpp=>si_network_scan().
 
     int target_num = 0;
     int dimensionality = f2_get_dimensionality(base_num);
@@ -169,7 +169,7 @@ int si_TSs_scale(struct RegionTreeNode **regn_forest, int tree_num)
 
 int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res)
 {
-    // Be used in function4_R.cpp.
+    // Be used in function4_R.cpp=>f4_network_scan_feedback().
 
     // Return the number of discovered addresses.
 

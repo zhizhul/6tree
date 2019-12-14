@@ -32,7 +32,7 @@ int f3_testtype_tran_intype(int test_type);
 
 struct SearchTreeNode *f3_prepare_test_data(string testfile_name, int test_type, string treedir_name);
 
-void f3_read_budget_parameters(int &budget, int &itn_budget, string treedir_name);
+void f3_read_search_parameters(int &budget, int &itn_budget, string treedir_name);
 
 void f3_release_region_tree(struct RegionTreeNode *regn_ptr);
 

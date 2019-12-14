@@ -221,14 +221,18 @@ void f2_output_arr(string *arr, int arr_scale, string outdir_name)
     outfile.close();
 }
 
-void f2_output_budget_parameters(string outdir_name)
+void f2_output_search_parameters(string outdir_name)
 {
-    // Output pre-defined budget parameters into the configuration file.
+    // Output pre-defined search parameters into the configuration file.
     // Users can adjust parameters in the file.
     ofstream outfile;
-    outfile.open("./" + outdir_name + "/" + _BUD_FILE);
+    outfile.open("./" + outdir_name + "/" + _SEARCH_FILE);
     outfile << "budget : " << _SCAN_BUDGET << endl;
     outfile << "step_budget : " << _SCAN_STEP_BUDGET << endl;
+    outfile << "adet_ptimes : " << _SCAN_TIMES << endl;
+    outfile << "adet_tsscale_thd : " << _SCAN_ZETA << endl;
+    outfile << "adet_aad_thd : " << _SCAN_PI << endl;
+    outfile << "adet_crip : " << _SCAN_CRIP << endl;
     outfile.close();
 }
 
@@ -306,8 +310,8 @@ void f2_work(int type1, string str2, int type3, string str4)
     f2_release_tree(root);
     delete[] arr;
     
-    // Output pre-defined budget parameters.
-    f2_output_budget_parameters(outdir_name);
+    // Output pre-defined search parameters.
+    f2_output_search_parameters(outdir_name);
 
     // Output pre-defined scanner parameters.
     si_output_scanner_command(outdir_name);
