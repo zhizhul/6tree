@@ -55,7 +55,7 @@ struct SequenceNode *f4_network_feedback(struct RegionTreeNode **regn_forest, in
     active_addrs_read.close();
 
     // 2.2 Sort region trees based on their region expressions.
-    sort(regn_forest, regn_forest, regn_tree_num, f3_regn_cmp);
+    sort(regn_forest, regn_forest + regn_tree_num, f3_regn_cmp);
 
     // 2.3 Perform the renew operation.
     f3_renew_NDA(regn_forest, regn_tree_num, arr, active_addr_num);
@@ -216,7 +216,6 @@ string *f4_psurdgen_targets(struct VectorRegion TS, int l_dimension, int ptimes,
     for (int i = 0; i < TS.num; i++)
     {
         string background_str = TS.expressions[i];
-        int char_idx = 0;
         for (int j = 0; j < ptimes; j++)
         {
             string str = background_str;
@@ -273,6 +272,8 @@ int f4_adet_scan_feedback(string *targets, int targets_num, int &budget, ofstrea
     f3_print_time(scan_log);
     scan_log << endl;
     scan_log << "response number: " << active_addr_num << ", budget remains: " << budget << endl;
+    
+    return active_addr_num;
 }
 
 void f4_adet_replace_descendant(struct SequenceNode *&pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h)
@@ -340,7 +341,7 @@ void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode)
         }
 
         ptr_prev = ptr;
-        ptr = xi_ptr->next;
+        ptr = ptr->next;
     }
     ptr_prev->next = pnode;
     pnode->next = ptr;
@@ -712,7 +713,7 @@ void f4_work(int type1, string str2, int type3, string str4)
     int addr_total_num = 0;
     addr_total_res.open(res_dir_str + "/" + _RES_FILE);
     ofstream scan_log;
-    scan_log.open(res_dis_str + "/" + _LOG_FILE);
+    scan_log.open(res_dir_str + "/" + _LOG_FILE);
     addr_total_num += f4_network_scan_feedback(xi, budget, addr_total_res, scan_log);
 
     f1_print_time();

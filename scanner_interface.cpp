@@ -13,6 +13,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <random>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -43,7 +45,7 @@ void si_output_scanner_command(string outdir_name)
     outfile.open("./" + outdir_name + "/" + _SCANNER_FILE);
 
     outfile << "app_name : " << _SI_APP_NAME << endl;
-    outfile << "ins_num : " << _SI_INS_NUM << endl;
+    outfile << "ins_num : " << _SI_DFT_INS_NUM << endl;
     outfile << _SI_DFT_INS_PM << endl;
     outfile << _SI_DFT_INS_STEP_TF << endl;
     outfile << _SI_DFT_INS_STEP_RES << endl;
@@ -67,7 +69,7 @@ void si_read_scanner_command(string treedir_name)
     
     // Read the application name.
     getline(pfile, line);
-    vector<string> split_res = f1_str_split(line, ":");
+    vector<string> split_res = f1_str_split(line, ':');
     string app_str = split_res[1];
     split_res.clear();
     f3_trim(app_str);
@@ -75,7 +77,7 @@ void si_read_scanner_command(string treedir_name)
 
     // Read the number of secondary instructions.
     getline(pfile, line);
-    split_res = f1_str_split(line, ":");
+    split_res = f1_str_split(line, ':');
     string num_str = split_res[1];
     split_res.clear();
     f3_trim(num_str);
@@ -85,7 +87,7 @@ void si_read_scanner_command(string treedir_name)
     for (int i = 0; i < ins_num; i++)
     {
         getline(pfile, line);
-        split_res = f1_str_split(line, ":");
+        split_res = f1_str_split(line, ':');
         string ins_str = split_res[1];
         split_res.clear();
         f3_trim(ins_str);
@@ -189,8 +191,10 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
     // -- up is test code
     budget -= arr_scale;
 
-    si_RandomGenerator sg;
-    random_shuffle(arr, arr + arr_scale, sg);
+    random_device rd_dev;
+    mt19937 gn(rd_dev());
+    shuffle(arr, arr + arr_scale, gn);
+    
     ofstream target_file;
     target_file.open(_SI_STEP_TF_FILE);
     for (int i = 0; i < arr_scale; i++)
@@ -230,7 +234,7 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
 
     delete [] arr;
 
-    int NDA = add_scale;
+    int NDA = arr_scale;
     return NDA;
 }
 
@@ -263,5 +267,5 @@ int si_adet_network_scan(string *targets, int targets_num, int &budget)
     }
     res_file.close();
 
-    return NDA.
+    return NDA;
 }

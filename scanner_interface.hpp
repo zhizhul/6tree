@@ -32,18 +32,6 @@ extern string scanner_cmd;
 // File name of discovered active addresses in one step
 #define _SI_STEP_RES_FILE "result.txt"
 
-// Random generator for shuffling the target order
-class si_RandomGenerator
-{
-    public:
-    ptrdiff_t operator() (ptrdiff_t max)
-    {
-        double t;
-        t = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-        return static_cast<ptrdiff_t>(t * max);
-    }
-}
-
 void si_output_scanner_command(string outdir_name);
 
 void si_read_scanner_command(string treedir_name);
