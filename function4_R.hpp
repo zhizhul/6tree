@@ -20,9 +20,19 @@ bool f4_is_potential(struct PreparedSpaceTreeNode *node, double adet_zeta, doubl
 
 struct SequenceNode *f4_takeout_pnode(struct SequenceNode *&xi_h, double adet_zeta, double adet_pi);
 
-void f4_pnode_analysis(struct SequenceNode *pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, int &addr_total_num, ofstream &scan_log, ofstream &ali_file);
+string *f4_psurdgen_targets(struct VectorRegion TS, int l_dimension, int ptimes, int &targets_num);
 
-void f4_alias_detection(struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, int &addr_total_num, ofstream &scan_log, ofstream &ali_file);
+int f4_get_lastdimension(struct DimenStack DS);
+
+int f4_adet_scan_feedback(string *targets, int targets_num, int &budget, ofstream &scan_log);
+
+void f4_adet_replace_descendant(struct SequenceNode *&pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h);
+
+void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode);
+
+int f4_pnode_analysis(struct SequenceNode *pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, ofstream &scan_log, ofstream &ali_file);
+
+int f4_alias_detection(struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, ofstream &scan_log, ofstream &ali_file);
 
 void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParameters &adet_ps, string treedir_name);
 

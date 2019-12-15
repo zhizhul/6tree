@@ -56,4 +56,6 @@ int si_TSs_scale(struct RegionTreeNode **regn_forest, int tree_num);
 
 int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budget, ofstream &addr_total_res);
 
+int si_adet_network_scan(string *targets, int targets_num, int &budget);
+
 #endif /* scanner_interface_hpp */

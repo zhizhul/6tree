@@ -1414,11 +1414,6 @@ void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
     {
         struct PreparedSpaceTreeNode *spe_ptr = xi_h_ptr->node;
         struct PreparedSpaceTreeNode *spe_pptr = spe_ptr->parent;
-        if (spe_pptr == NULL)
-        {
-            // spe_ptr is the root node, in the case, there is only one node in xi cup xi_h.
-            continue;
-        }
         if (f3_same_DS(spe_pptr, spe_ptr))
         {
             // Copy the TS information to the parent node.
@@ -1443,11 +1438,12 @@ void f3_replace_descendant(struct SequenceNode *&xi, struct SequenceNode *&xi_h)
         xi_h_ptr = xi_h_ptr->next;
     }
 
-    // 2. Perform the replacement in xi and xi_h.
     if (new_nodes == NULL)
     {
         return ;
     }
+
+    // 2. Perform the replacement in xi and xi_h.
 
     // Generate an array to store information of new_nodes.
     int new_nodes_arr_scale = 0;

@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -200,55 +201,314 @@ struct SequenceNode *f4_takeout_pnode(struct SequenceNode *&xi_h, double adet_ze
     return ptr;
 }
 
-void f4_pnode_analysis
+string *f4_psurdgen_targets(struct VectorRegion TS, int l_dimension, int ptimes, int &targets_num)
+{
+    targets_num = base_num * ptimes * TS.num;
+    string *arr = new string [targets_num + 2];
+    int dimensionality = f2_get_dimensionality(base_num);
+    int arr_idx = 0;
+    for (int i = 0; i < TS.num; i++)
+    {
+        string background_str = TS.expressions[i];
+        int char_idx = 0;
+        for (int j = 0; j < ptimes; j++)
+        {
+            string str = background_str;
+            for (int k = 0; k < base_num; k++)
+            {
+                arr[arr_idx] = str;
+                if (k < 10)
+                {
+                    arr[arr_idx][l_dimension] = '0' + k;
+                }
+                else // k >= 10
+                {
+                    arr[arr_idx][l_dimension] = 'a' + k - 10;
+                }
+                for (int t = 0; t < dimensionality; t++)
+                {
+                    if (arr[arr_idx][t] == '*')
+                    {
+                        int rd = rand() % base_num;
+                        if (rd < 10)
+                        {
+                            arr[arr_idx][t] = '0' + rd;
+                        }
+                        else // rd >= 10
+                        {
+                            arr[arr_idx][t] = 'a' + rd - 10;
+                        }
+                    }
+                }
+                arr_idx++;
+            }
+        }
+    }
+    return arr;
+}
+
+int f4_get_lastdimension(struct DimenStack DS)
+{
+    int ds_num = DS.num;
+    if (ds_num == f2_get_dimensionality(base_num))
+    {
+        ds_num--;
+    }
+    return DS.stack[ds_num];
+}
+
+int f4_adet_scan_feedback(string *targets, int targets_num, int &budget, ofstream &scan_log)
+{
+    int active_addr_num = si_adet_network_scan(targets, targets_num, budget);
+
+    f1_print_time();
+    cout << endl;
+    cout << "response number: " << active_addr_num << ", budget remains: " << budget << endl;
+    f3_print_time(scan_log);
+    scan_log << endl;
+    scan_log << "response number: " << active_addr_num << ", budget remains: " << budget << endl;
+}
+
+void f4_adet_replace_descendant(struct SequenceNode *&pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h)
+{
+    struct PreparedSpaceTreeNode *new_sptr = NULL;
+    
+    // 1. Check if the replacement is necessary.
+    struct PreparedSpaceTreeNode *spe_ptr = pnode->node;
+    struct PreparedSpaceTreeNode *spe_pptr = pnode->node->parent;
+    if (f3_same_DS(spe_pptr, spe_ptr))
+    {
+        // Copy the TS information to the parent node.
+        f3_copy_TS2parent(spe_ptr, spe_pptr);
+        // Add the parent node into new_sptr.
+        new_sptr = spe_pptr;
+    }
+    if (new_sptr == NULL)
+    {
+        return ;
+    }
+
+    // 2. Perform the replacement in xi and xi_h.
+
+    // Generate an array to store information of new_node.
+    int new_nodes_arr_scale = 1;
+    struct PreparedSpaceTreeNode **new_nodes_arr = new struct PreparedSpaceTreeNode *[3];
+    new_nodes_arr[0] = new_sptr;
+
+    // Delete retired nodes and gather the information of SS and NDA.
+    struct SequenceNode *retired_nodes = f3_get_retired_nodes(xi, xi_h, new_nodes_arr, new_nodes_arr_scale, new_sptr);
+    new_sptr->SS = f3_gather_descendant_SS(retired_nodes);
+    new_sptr->NDA = f3_gather_descendant_NDA(retired_nodes);
+    f3_delete_retired_inseq(xi, retired_nodes);
+    f3_delete_retired_inseq(xi_h, retired_nodes);
+    f3_release_seq(retired_nodes);
+    delete [] new_nodes_arr;
+
+    // Update pnode.
+    pnode->node = new_sptr;
+}
+
+void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode)
+{
+    // -- need work: 注意如果xi是空集就直接保存给它，所以xi要加&
+}
+
+int f4_pnode_analysis
 (
-    struct SequenceNode *pnode, 
-    struct SequenceNode *&xi, 
-    struct SequenceNode *&xi_h, 
-    int &budget, 
-    struct AdetParameters adet_ps, 
-    ofstream &addr_total_res, 
-    int &addr_total_num, 
-    ofstream &scan_log, 
+    struct SequenceNode *pnode,
+    struct SequenceNode *&xi,
+    struct SequenceNode *&xi_h,
+    int &budget,
+    struct AdetParameters adet_ps,
+    ofstream &addr_total_res,
+    ofstream &scan_log,
     ofstream &ali_file
 )
 {
-    // -- need work
+    // 1. Pseudorandomly select targets from its TS and perform scan_feedback(). Iterate the operation until all targets are inactive.
+    while (true)
+    {
+        int targets_num = 0;
+        struct PreparedSpaceTreeNode *spe_node = pnode->node;
+        int l_dimension = f4_get_lastdimension(spe_node->DS);
 
-    // 只要当xi_h中存在异常结点时，就继续别名探测。
+        f1_print_time();
+        cout << endl;
+        cout << "Target region: " << spe_node->TS.expressions[0];
+        int idx = 1;
+        int TS_num = spe_node->TS.num;
+        while (idx < TS_num)
+        {
+            cout << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        cout << endl;
 
-    // 拿出一个异常结点，对其TS随机选取出少量地址作为目标。同时扣除预算。地址数量结合base_num和adet_ptimes来确定。
-    // 那么这个目标集就不必作为区树森林来表示，而是用一般的数组就足够表示了。
+        f3_print_time(scan_log);
+        scan_log << endl;
+        scan_log << "Target region: " << spe_node->TS.expressions[0];
+        idx = 1;
+        while (idx < TS_num)
+        {
+            scan_log << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        scan_log << endl;
 
-    // 调用扫描器扫描目标集，然后从结果文件中计算活跃地址的数量，只要不为0就继续探测，否则就结束。
+        string *targets = f4_psurdgen_targets(spe_node->TS, l_dimension, adet_ps.ptimes, targets_num);
+        budget -= targets_num;
+        int active_num = f4_adet_scan_feedback(targets, targets_num, budget, scan_log);
+        delete [] targets;
+        if (active_num != 0)
+        {
+            int dimension = f3_DS_pop(spe_node);
+            f3_TS_expand(spe_node, dimension);
+            f4_adet_replace_descendant(pnode, xi, xi_h);
+        }
+        else
+        {
+            break;
+        }
+    }
 
-    // (新开一个函数)分情况处理，看是作为别名地址区还是正常地址区。
+    // 2. Check the scale of TS and perform different operations in different cases.
+    int crip = adet_ps.crip;
+    struct PreparedSpaceTreeNode *spe_node = pnode->node;
+    int TS_num = spe_node->TS.num;
+    string TS_expr0 = spe_node->TS.expressions[0];
+    int dimensionality = f2_get_dimensionality(base_num);
+    int star_num = 0;
+    for (int i = 0; i < dimensionality; i++)
+    {
+        if (TS_expr0[i] == '*')
+        {
+            star_num++;
+        }
+    }
+    double log_TS_scale = log((double )TS_num) + (double )star_num * log((double )base_num);
+    double log_crip = log((double )crip);
 
-    // 别名地址区就做记录并将结点保存到xi的最后面，同时更新其TS与SS（探测过的区域虽然没有完全扫描过，也变为SS）。
+    if (log_TS_scale > log_crip)
+    {
+        // Regard it as an aliased address region.
 
-    // 正常地址区就扫描TS-SS然后更新到xi中
+        f1_print_time();
+        cout << endl;
+        cout << "Aliased region: " << spe_node->TS.expressions[0];
+        int idx = 1;
+        int TS_num = spe_node->TS.num;
+        while (idx < TS_num)
+        {
+            cout << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        cout << endl;
+
+        f3_print_time(scan_log);
+        scan_log << endl;
+        scan_log << "Aliased region: " << spe_node->TS.expressions[0];
+        idx = 1;
+        while (idx < TS_num)
+        {
+            scan_log << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        scan_log << endl;
+
+        for (int i = 0; i < TS_num; i++)
+        {
+            ali_file << spe_node->number << ", " << spe_node->TS.expressions[i] << endl;
+        }
+
+        f3_copy_TS2SS(spe_node);
+        int dimension = f3_DS_pop(spe_node);
+        f3_TS_expand(spe_node, dimension);
+        f4_adet_replace_descendant(pnode, xi, xi_h);
+        
+        if (xi == NULL)
+        {
+            xi = pnode;
+            pnode->next = NULL;
+        }
+        else
+        {
+            struct SequenceNode *xi_ptr = xi;
+            while (xi_ptr->next != NULL)
+            {
+                xi_ptr = xi_ptr->next;
+            }
+            xi_ptr->next = pnode;
+            pnode->next = NULL;
+        }
+
+        int active_num = 0;
+        return active_num;
+    }
+    else // log_TS_scale <= log_crip
+    {
+        // Regard it as an normal address region.
+
+        f1_print_time();
+        cout << endl;
+        cout << "Normal region: " << spe_node->TS.expressions[0];
+        int idx = 1;
+        int TS_num = spe_node->TS.num;
+        while (idx < TS_num)
+        {
+            cout << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        cout << endl;
+
+        f3_print_time(scan_log);
+        scan_log << endl;
+        scan_log << "Normal region: " << spe_node->TS.expressions[0];
+        idx = 1;
+        while (idx < TS_num)
+        {
+            scan_log << ", " << spe_node->TS.expressions[idx];
+            idx++;
+        }
+        scan_log << endl;
+
+        pnode->next = NULL;
+        int active_num = f4_network_scan_feedback(pnode, budget, addr_total_res, scan_log);
+        f4_insert(xi, pnode);
+        return active_num;
+    }
 }
 
-void f4_alias_detection
+int f4_alias_detection
 (
     struct SequenceNode *&xi,
     struct SequenceNode *&xi_h, 
     int &budget, 
     struct AdetParameters adet_ps, 
-    ofstream &addr_total_res, 
-    int &addr_total_num, 
+    ofstream &addr_total_res,
     ofstream &scan_log, 
     ofstream &ali_file
 )
 {
+    int active_num = 0;
     struct SequenceNode *pnode = NULL;
     pnode = f4_takeout_pnode(xi_h, adet_ps.zeta, adet_ps.pi);
     while (pnode != NULL)
     {
-        f4_pnode_analysis(pnode, xi, xi_h, budget, adet_ps, addr_total_res, addr_total_num, scan_log, ali_file);
+        f1_print_time();
+        cout << "[Alias detection] Start on node: " << pnode->node->number << endl;
+        f3_print_time(scan_log);
+        scan_log << "[Alias detection] Start on node: " << pnode->node->number << endl;
 
+        active_num += f4_pnode_analysis(pnode, xi, xi_h, budget, adet_ps, addr_total_res, scan_log, ali_file);
+
+        f1_print_time();
+        cout << "[Alias detection] Finished on node: " << pnode->node->number << endl;
+        f3_print_time(scan_log);
+        scan_log << "[Alias detection] Start on node: " << pnode->node->number << endl;
+        
         pnode = f4_takeout_pnode(xi_h, adet_ps.zeta, adet_ps.pi);
     }
+    return active_num;
 }
 
 void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParameters &adet_ps, string treedir_name)
@@ -371,6 +631,8 @@ void f4_work(int type1, string str2, int type3, string str4)
 
     ofstream ali_file;
     ali_file.open(res_dir_str + "/" + _ALI_FILE);
+    ali_file << "base_num : " << base_num << endl;
+    ali_file << "node_num, region" << endl;
 
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
@@ -382,10 +644,10 @@ void f4_work(int type1, string str2, int type3, string str4)
         f3_replace_descendant(xi, xi_h);
 
         // 3.3.3 Alias detection.
-        f4_alias_detection(xi, xi_h, budget, adet_ps, addr_total_res, addr_total_num, scan_log, ali_file);
+        addr_total_num += f4_alias_detection(xi, xi_h, budget, adet_ps, addr_total_res, scan_log, ali_file);
 
         // 3.3.4 Scan and feedback.
-        // -- need work: 要注意，经过别名测量之后有可能xi_h变成了空集，因此可能要做与function3代码不同的处理。写完alias_detection之后要检查一下这个函数。
+        // -- need work: 要注意，经过别名测量之后有可能xi_h变成了空集，因此可能要做与function3代码不同的处理。写完alias_detection之后要检查一下这个函数以及下面的归并排序函数。
         addr_total_num += f4_network_scan_feedback(xi_h, budget, addr_total_res, scan_log);
 
         // 3.3.5 Merge sort.

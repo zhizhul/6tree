@@ -173,7 +173,7 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
 
     // Return the number of discovered addresses.
 
-    // Write targets into _SI_STEP_TF_FILE and deduct the budget.
+    // 1. Write targets into _SI_STEP_TF_FILE and deduct the budget.
     int TSs_scale = si_TSs_scale(regn_forest, tree_num);
     string *arr = new string [TSs_scale];
     int arr_idx = 0;
@@ -199,11 +199,11 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
     }
     target_file.close();
 
-    // Call the scanner ZMapv6 to search active addresses.
+    // 2. Call the scanner ZMapv6 to search active addresses.
     // -- need work: 测试的时候可以把这个代码注释掉，那么就可以进行本地测试，看正常工作能力。
     system(scanner_cmd.c_str());
 
-    // Sort and unique the search result, since some addresses might be repeated (multi response packets).
+    // 3. Sort and unique the search result, since some addresses might be repeated (multi response packets).
     string line;
     ifstream res_file_read;
     res_file_read.open(_SI_STEP_RES_FILE);
@@ -232,4 +232,36 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
 
     int NDA = add_scale;
     return NDA;
+}
+
+int si_adet_network_scan(string *targets, int targets_num, int &budget)
+{
+    // Be used in function4_R.cpp=>f4_adet_scan_feedback().
+
+    // Return the number of discovered addresses.
+
+    // 1. Write targets into _SI_STEP_TF_FILE and deduct the budget.
+    ofstream target_file;
+    target_file.open(_SI_STEP_TF_FILE);
+    for (int i = 0; i < targets_num; i++)
+    {
+        target_file << f3_addr_tran_std(targets[i]) << endl;
+    }
+    target_file.close();
+
+    // 2. Call the scanner ZMapv6 to search active addresses.
+    system(scanner_cmd.c_str());
+
+    // 3. Count the number of discovered addresses and return it.
+    int NDA = 0;
+    string line;
+    ifstream res_file;
+    res_file.open(_SI_STEP_RES_FILE);
+    while (getline(res_file, line))
+    {
+        NDA++;
+    }
+    res_file.close();
+
+    return NDA.
 }
