@@ -89,6 +89,12 @@ struct SequenceNode *f4_network_feedback(struct RegionTreeNode **regn_forest, in
 
 int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &addr_total_res, ofstream &scan_log)
 {
+    if (xi_h == NULL)
+    {
+        int active_addr_num = 0;
+        return active_addr_num;
+    }
+
     // 1. Prepare the target address set C, represented as a region tree forest.
 
     // Count the number of TSs.
@@ -310,7 +316,34 @@ void f4_adet_replace_descendant(struct SequenceNode *&pnode, struct SequenceNode
 
 void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode)
 {
-    // -- need work: 注意如果xi是空集就直接保存给它，所以xi要加&
+    if (xi == NULL)
+    {
+        xi = pnode;
+        pnode->next = NULL;
+        return ;
+    }
+
+    if (f3_density_cmp(pnode, xi))
+    {
+        pnode->next = xi;
+        xi = pnode;
+        return ;
+    }
+
+    struct SequenceNode *ptr = xi->next;
+    struct SequenceNode *ptr_prev = xi;
+    while (ptr != NULL)
+    {
+        if (f3_density_cmp(pnode, ptr))
+        {
+            break;
+        }
+
+        ptr_prev = ptr;
+        ptr = xi_ptr->next;
+    }
+    ptr_prev->next = pnode;
+    pnode->next = ptr;
 }
 
 int f4_pnode_analysis
@@ -647,7 +680,6 @@ void f4_work(int type1, string str2, int type3, string str4)
         addr_total_num += f4_alias_detection(xi, xi_h, budget, adet_ps, addr_total_res, scan_log, ali_file);
 
         // 3.3.4 Scan and feedback.
-        // -- need work: 要注意，经过别名测量之后有可能xi_h变成了空集，因此可能要做与function3代码不同的处理。写完alias_detection之后要检查一下这个函数以及下面的归并排序函数。
         addr_total_num += f4_network_scan_feedback(xi_h, budget, addr_total_res, scan_log);
 
         // 3.3.5 Merge sort.
