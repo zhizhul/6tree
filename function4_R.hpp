@@ -30,11 +30,15 @@ void f4_adet_replace_descendant(struct SequenceNode *&pnode, struct SequenceNode
 
 void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode);
 
+void f4_set_aliased(struct PreparedSpaceTreeNode *ptr);
+
 int f4_pnode_analysis(struct SequenceNode *pnode, struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, ofstream &scan_log, ofstream &ali_file);
 
 int f4_alias_detection(struct SequenceNode *&xi, struct SequenceNode *&xi_h, int &budget, struct AdetParameters adet_ps, ofstream &addr_total_res, ofstream &scan_log, ofstream &ali_file);
 
 void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParameters &adet_ps, string treedir_name);
+
+void f4_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNode *root);
 
 void f4_work(int type1, string str2, int type3, string str4);
 

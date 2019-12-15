@@ -134,6 +134,9 @@ struct PreparedSpaceTreeNode
     struct VectorRegion SS;
     // Number of discovered addresses
     int NDA;
+
+    // If it's an alised node.
+    bool is_aliased;
 };
 
 // Space tree node sequence node

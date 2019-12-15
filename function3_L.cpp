@@ -238,6 +238,7 @@ struct PreparedSpaceTreeNode *f3_prepare_space_tree(string treedir_name)
         node_arr[num]->number = num;
         node_arr[num]->inf = inf;
         node_arr[num]->sup = sup;
+        node_arr[num]->is_aliased = false;
         
         if (parent_num == 0)
         {

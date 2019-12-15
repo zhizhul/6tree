@@ -346,6 +346,16 @@ void f4_insert(struct SequenceNode *&xi, struct SequenceNode *pnode)
     pnode->next = ptr;
 }
 
+void f4_set_aliased(struct PreparedSpaceTreeNode *ptr)
+{
+    ptr->is_aliased = true;
+
+    for (int i = 0; i < ptr->children_num; i++)
+    {
+        f4_set_aliased(ptr->children[i]);
+    }
+}
+
 int f4_pnode_analysis
 (
     struct SequenceNode *pnode,
@@ -448,15 +458,18 @@ int f4_pnode_analysis
         }
         scan_log << endl;
 
+        f3_copy_TS2SS(spe_node);
+        int dimension = f3_DS_pop(spe_node);
+        f3_TS_expand(spe_node, dimension);
+        f4_adet_replace_descendant(pnode, xi, xi_h);
+
+        spe_node = pnode->node;
         for (int i = 0; i < TS_num; i++)
         {
             ali_file << spe_node->number << ", " << spe_node->TS.expressions[i] << endl;
         }
 
-        f3_copy_TS2SS(spe_node);
-        int dimension = f3_DS_pop(spe_node);
-        f3_TS_expand(spe_node, dimension);
-        f4_adet_replace_descendant(pnode, xi, xi_h);
+        f4_set_aliased(spe_node);
         
         if (xi == NULL)
         {
@@ -601,6 +614,51 @@ void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParamete
     treefile.close();
 }
 
+void f4_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNode *root)
+{
+    // Output the visualization information, based on the space tree structure.
+    // If it's an aliased node, nda and density will be -1. 
+
+    // 1. Store tree nodes into the array.
+    struct PreparedSpaceTreeNode **node_arr = new struct PreparedSpaceTreeNode *[node_num + 10];
+    int node_arr_scale = 0;
+    node_arr[node_arr_scale++] = root;
+    f3_store_node(node_arr, node_arr_scale, root);
+
+    // 2. Output iris information to the file.
+    iris_res << "base_num : " << base_num << endl;
+    iris_res << "node_num : " << node_num << endl;
+    iris_res << "num, inf, sup, parent_num, children_num, nda, density, subspace" << endl;
+    iris_res << "1, " << root->inf << ", " << root->sup << ", 0, " << root->children_num << ", " << root->NDA;
+    iris_res << ", " << f3_calc_density(root) << ", " << root->subspace << endl;
+    for (int i = 1; i < node_num; i++)
+    {
+        int num = i + 1;
+        int inf = node_arr[i]->inf;
+        int sup = node_arr[i]->sup;
+        int parent_num = node_arr[i]->parent->number;
+        int children_num = node_arr[i]->children_num;
+        string subspace = node_arr[i]->subspace;
+
+        int nda;
+        double density;
+        if (node_arr[i]->is_aliased == false)
+        {
+            nda = node_arr[i]->NDA;
+            density = f3_calc_density(node_arr[i]);
+        }
+        else // node_arr[i]->is_aliased == true
+        {
+            nda = -1;
+            density = -1.0;
+        }
+        iris_res << num << ", " << inf << ", " << sup << ", " << parent_num << ", " << children_num << ", " << nda;
+        iris_res << ", " << density << ", " << subspace << endl;
+    }
+
+    delete [] node_arr;
+}
+
 void f4_work(int type1, string str2, int type3, string str4)
 {
     // 1. Analyze instructions.
@@ -707,7 +765,7 @@ void f4_work(int type1, string str2, int type3, string str4)
     addr_total_res_read.close();
     ofstream iris_res;
     iris_res.open(res_dir_str + "/" + _IRIS_FILE);
-    f3_output_iris(iris_res, node_num, root);
+    f4_output_iris(iris_res, node_num, root);
     iris_res.close();
     f1_print_time();
     cout << "[Network search] Output visualization information finished." << endl;
