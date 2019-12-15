@@ -1056,10 +1056,10 @@ int f3_local_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &ad
     
     f1_print_time();
     cout << endl;
-    cout << "find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
+    cout << "Find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
     f3_print_time(scan_log);
     scan_log << endl;
-    scan_log << "find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
+    scan_log << "Find active addresses: " << active_addr_num << ", budget remains: " << budget << endl;
     
     // 4. Epilogue.
 
