@@ -65,3 +65,5 @@ Function 4: Internet-wide search
 与local simulation不同，结果文件夹里面的iris信息中，如果是别名结点，那么nda会记成-1。
 
 > ./6tree -R -in-tree *tree_folder* -out-res *result_folder*
+
+> ./6tree -R -in-tree tree_hex -out-rs result_hex
