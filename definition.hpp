@@ -79,6 +79,8 @@ struct SpaceTreeNode
 
 // File name of discovered active addresses
 #define _RES_FILE "discovered_addrs"
+// File name of discovered dealiased active addresses
+#define _DARES_FILE "discovered_dealiased_addrs"
 // File name of discovered active addresses in one step
 #define _STEP_RES_FILE "active_addrs"
 // File name of detected alias regions

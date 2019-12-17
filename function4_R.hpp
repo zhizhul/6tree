@@ -42,6 +42,10 @@ void f4_read_search_parameters(int &budget, int &itn_budget, struct AdetParamete
 
 void f4_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNode *root);
 
+bool f4_is_aliased(string addr, struct PreparedSpaceTreeNode *root);
+
+void f4_output_da_addrs(ifstream &total, ofstream &da, struct PreparedSpaceTreeNode *root);
+
 void f4_work(int type1, string str2, int type3, string str4);
 
 void f4_access(int argc, const char *argv[]);

@@ -687,6 +687,50 @@ void f4_output_iris(ofstream &iris_res, int node_num, struct PreparedSpaceTreeNo
     delete [] node_arr;
 }
 
+bool f4_is_aliased(string addr, struct PreparedSpaceTreeNode *root)
+{
+    struct PreparedSpaceTreeNode *ptr = root;
+    while (true)
+    {
+        if (ptr->is_aliased == true)
+        {
+            return true;
+        }
+        if (ptr->children_num == 0)
+        {
+            return false;
+        }
+        
+        int children_num = ptr->children_num;
+        int i = 0;
+        for (; i < children_num; i++)
+        {
+            if (f3_expression_belong(addr, ptr->children[i]->subspace))
+            {
+                ptr = ptr->children[i];
+                break;
+            }
+        }
+        if (i == children_num)
+        {
+            return false;
+        }
+    }
+}
+
+void f4_output_da_addrs(ifstream &total, ofstream &da, struct PreparedSpaceTreeNode *root)
+{
+    string line;
+    while (getline(total, line))
+    {
+        string addr = f3_std_tran_addr(line);
+        if (!f4_is_aliased(addr, root))
+        {
+            da << line << endl;
+        }
+    }
+}
+
 void f4_work(int type1, string str2, int type3, string str4)
 {
     // 1. Analyze instructions.
@@ -786,14 +830,27 @@ void f4_work(int type1, string str2, int type3, string str4)
     ali_file.close();
     scan_log.close();
 
-    // 3.4 Output iris information.
+    // 3.4 Output dealiased active addresses.
+    f1_print_time();
+    cout << "[Network search] Output dealiased active addresses." << endl;
+    ifstream addr_total_res_read;
+    ofstream addr_da_res_write;
+    addr_total_res_read.open(res_dir_str + "/" + _RES_FILE);
+    addr_da_res_write.open(res_dir_str + "/" + _DARES_FILE);
+    f4_output_da_addrs(addr_total_res_read, addr_da_res_write, root);
+    addr_total_res_read.close();
+    addr_da_res_write.close();
+    f1_print_time();
+    cout << "[Network search] Output dealiased active addresses finished." << endl;
+
+    // 3.5 Output iris information.
     f1_print_time();
     cout << "[Network search] Output visualization information." << endl;
     int node_num = f3_clear_NDA(root);
-    ifstream addr_total_res_read;
-    addr_total_res_read.open(res_dir_str + "/" + _RES_FILE);
-    f3_count_NDA(addr_total_res_read, root);
-    addr_total_res_read.close();
+    ifstream addr_da_res_read;
+    addr_da_res_read.open(res_dir_str + "/" + _DARES_FILE);
+    f3_count_NDA(addr_da_res_read, root);
+    addr_da_res_read.close();
     ofstream iris_res;
     iris_res.open(res_dir_str + "/" + _IRIS_FILE);
     f4_output_iris(iris_res, node_num, root);
@@ -801,7 +858,7 @@ void f4_work(int type1, string str2, int type3, string str4)
     f1_print_time();
     cout << "[Network search] Output visualization information finished." << endl;
 
-    // 3.5 Release space tree and sequence data.
+    // 3.6 Release space tree and sequence data.
     f1_print_time();
     cout << "[Network search] Release space tree and sequence data." << endl;
     f3_release_pspace_tree(root);
