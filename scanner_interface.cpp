@@ -87,12 +87,8 @@ void si_read_scanner_command(string treedir_name)
     for (int i = 0; i < ins_num; i++)
     {
         getline(pfile, line);
-        split_res = f1_str_split(line, ':');
-        string ins_str = split_res[1];
-        split_res.clear();
-        f3_trim(ins_str);
         scanner_cmd += " ";
-        scanner_cmd += ins_str;
+        scanner_cmd += line;
     }
 
     pfile.close();
@@ -185,10 +181,6 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
     }
     int arr_scale = arr_idx;
 
-    // -- need work: 到时候可以用Xcode检查一下，看地址的输出是否正常，arr_idx的运行是否正常
-    // -- below is test code
-    cout << "the scale is: " << arr_scale << endl;
-    // -- up is test code
     budget -= arr_scale;
 
     random_device rd_dev;
@@ -204,7 +196,6 @@ int si_network_scan(struct RegionTreeNode **regn_forest, int tree_num, int &budg
     target_file.close();
 
     // 2. Call the scanner ZMapv6 to search active addresses.
-    // -- need work: 测试的时候可以把这个代码注释掉，那么就可以进行本地测试，看正常工作能力。
     system(scanner_cmd.c_str());
 
     // 3. Sort and unique the search result, since some addresses might be repeated (multi response packets).

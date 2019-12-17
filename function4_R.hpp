@@ -16,6 +16,8 @@ int f4_network_scan_feedback(struct SequenceNode *&xi_h, int &budget, ofstream &
 
 double f4_calc_thd(struct PreparedSpaceTreeNode *node, double adet_zeta, double adet_pi, int dimensionality);
 
+int f4_calc_TSscale(struct PreparedSpaceTreeNode *node);
+
 bool f4_is_potential(struct PreparedSpaceTreeNode *node, double adet_zeta, double adet_pi, int dimensionality);
 
 struct SequenceNode *f4_takeout_pnode(struct SequenceNode *&xi_h, double adet_zeta, double adet_pi);

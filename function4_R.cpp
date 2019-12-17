@@ -161,14 +161,36 @@ double f4_calc_thd(struct PreparedSpaceTreeNode *node, double adet_zeta, double 
             star_num++;
         }
     }
-    double numerator = adet_pi * log(adet_zeta) * (128.0 * log(2.0) - (double )star_num * log((int )base_num));
+    double numerator = adet_pi * log(adet_zeta) * (128.0 * log(2.0) - (double )star_num * log((double )base_num));
     double denominator = (128.0 * log(2.0) - log(adet_zeta)) * (double )star_num * log((double )base_num);
     double thd = numerator / denominator;
     return thd;
 }
 
+int f4_calc_TSscale(struct PreparedSpaceTreeNode *node)
+{
+    int TS_num = node->TS.num;
+    string TS_expr0 = node->TS.expressions[0];
+    int dimensionality = f2_get_dimensionality(base_num);
+    int star_num = 0;
+    for (int i = 0; i < dimensionality; i++)
+    {
+        if (TS_expr0[i] == '*')
+        {
+            star_num++;
+        }
+    }
+    int scale = TS_num * (int )pow((double )base_num, (double )star_num);
+    return scale;
+}
+
 bool f4_is_potential(struct PreparedSpaceTreeNode *node, double adet_zeta, double adet_pi, int dimensionality)
 {
+    if ((double )f4_calc_TSscale(node) < adet_zeta)
+    {
+        return false;
+    }
+    
     double AAD = f3_calc_density(node);
     double thd = f4_calc_thd(node, adet_zeta, adet_pi, dimensionality);
     if (AAD > thd)
@@ -268,10 +290,10 @@ int f4_adet_scan_feedback(string *targets, int targets_num, int &budget, ofstrea
 
     f1_print_time();
     cout << endl;
-    cout << "response number: " << active_addr_num << ", budget remains: " << budget << endl;
+    cout << "Response number: " << active_addr_num << ", budget remains: " << budget << endl;
     f3_print_time(scan_log);
     scan_log << endl;
-    scan_log << "response number: " << active_addr_num << ", budget remains: " << budget << endl;
+    scan_log << "Response number: " << active_addr_num << ", budget remains: " << budget << endl;
     
     return active_addr_num;
 }
@@ -551,7 +573,12 @@ int f4_alias_detection
         f1_print_time();
         cout << "[Alias detection] Finished on node: " << pnode->node->number << endl;
         f3_print_time(scan_log);
-        scan_log << "[Alias detection] Start on node: " << pnode->node->number << endl;
+        scan_log << "[Alias detection] Finished on node: " << pnode->node->number << endl;
+        
+        if (budget < 0)
+        {
+            break;
+        }
         
         pnode = f4_takeout_pnode(xi_h, adet_ps.zeta, adet_ps.pi);
     }
@@ -729,29 +756,32 @@ void f4_work(int type1, string str2, int type3, string str4)
     // 3.3 Iterative scanning, until using out the budget.
     while (budget > 0)
     {
-        // 3.3.1 Select anterior nodes from xi, based on itn_budget.
+        // Select anterior nodes from xi, based on itn_budget.
         struct SequenceNode *xi_h = f3_cut_fseg(xi, itn_budget);
 
-        // 3.3.2 Perform the node replacement.
+        // Perform the node replacement.
         f3_replace_descendant(xi, xi_h);
 
-        // 3.3.3 Alias detection.
+        // Alias detection.
         addr_total_num += f4_alias_detection(xi, xi_h, budget, adet_ps, addr_total_res, scan_log, ali_file);
-
-        // 3.3.4 Scan and feedback.
-        addr_total_num += f4_network_scan_feedback(xi_h, budget, addr_total_res, scan_log);
-
-        // 3.3.5 Merge sort.
+        
+        if (budget > 0)
+        {
+            // Scan and feedback.
+            addr_total_num += f4_network_scan_feedback(xi_h, budget, addr_total_res, scan_log);
+        }
+        
+        // Merge sort.
         struct SequenceNode *tptr = f3_mergesort(xi, xi_h);
         xi = tptr;
     }
 
     f1_print_time();
     cout << endl << "Total scanning finished." << endl;
-    cout << "find total active addresses: " << addr_total_num << endl;
+    cout << "Find total active addresses: " << addr_total_num << endl;
     f3_print_time(scan_log);
     scan_log << endl << "Total scanning finished." << endl;
-    scan_log << "find total active addresses: " << addr_total_num << endl;
+    scan_log << "Find total active addresses: " << addr_total_num << endl;
     addr_total_res.close();
     ali_file.close();
     scan_log.close();
