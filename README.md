@@ -35,9 +35,9 @@ Function 1: Data translation
 
  b5, duotricemary, ...
 
-> ./6tree -T -in-std/b* *input_addrs* -out-std/b* *output_addrs*
+> ./6tree -T -in-std/b* ***input_addrs*** -out-std/b* ***output_addrs***
 
-> ./6tree -T -in-std known_active_addrs -out-b4 seeds_hex
+> ./6tree -T -in-std **known_active_addrs** -out-b4 **seeds_hex**
 
 Function 2: Space tree generation
 ---------------------------------
