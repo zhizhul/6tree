@@ -31,7 +31,7 @@ using namespace std;
 
 // Scan command
 // In the default configuration, the scan command will be:
-// zmap --probe-module=icmp6_echoscan --ipv6-target-file=targets.txt --output-file=result.txt --ipv6-source-ip=2001:1111::1111:2f --bandwidth=10M --cooldown-time=4
+// zmap --probe-module=icmp6_echoscan --ipv6-target-file=targets.txt --output-file=result.txt --ipv6-source-ip=2001:----::----:1002 --bandwidth=10M --cooldown-time=4
 string scanner_cmd;
 
 void si_output_scanner_command(string outdir_name)
