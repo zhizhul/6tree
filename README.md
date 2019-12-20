@@ -25,7 +25,7 @@ Function 1: Data translation
 
 > ./6tree -T -in-std/b* ***input_addrs_file*** -out-std/b* ***output_addrs_file***
 
-Remove repeated addresses, translate them into vector representations and sort them based on the binary order. This is a necessary pre-process for seed data, since 6Tree needs the seed data being sorted and each address vector is unique.
+Remove repeated addresses, translate them into vector representations, and sort them based on the binary order. This is a necessary pre-process for seed data since 6Tree needs the seed data being sorted, and each address vector is unique.
 
 In the file, each line has one IPv6 address/vector. It supports five kinds of representations as below,
 
@@ -47,14 +47,15 @@ For instance, if you want to translate known active addresses into seed vectors 
 Function 2: Space tree generation
 ---------------------------------
 
-结果以文件夹表示，其中包含了生成的空间树基本信息。此外代码默认还把扫描器和扫描的相关参数文件放在了这个文件夹里面。基于这个文件夹中的数据就可以用来支持活跃地址与别名区测量了。
+> ./6tree -G -in-b* ***seeds_file*** -out-tree ***tree_folder***
 
-代码默认在*rseult_file*文件夹里面生成这么几个文件：...（还是做个表格吧）
+第二个功能根据种子数据生成对应的空间树（ing形式：）表征种子向量在地址空间中的分布特点。结果保存在文件夹中，其中包括这么几个文件：（做一个表格）
 
-> ./6tree -G -in-b* *seeds_file* -out-tree *tree_folder*
+代码默认还把扫描器和扫描的相关参数文件放在了这个文件夹里面，用户可以调整其中的相关参数。因此基于这个文件夹中的数据就可以用来进行测量了。
 
-> ./6tree -G -in-b4 seeds_hex -out-tree tree_hex
-                
+例如，要基于十六进制模式的种子数据来进行空间树生成，输入
+
+> ./6tree -G -in-b4 **seeds_hex** -out-tree **tree_hex** 
 
 Function 3: Local simulation
 ----------------------------
