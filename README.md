@@ -21,6 +21,8 @@ The 3rd function (-L) usually needs a lot of memory. It's preferable to be great
 Function 1: Data translation
 ----------------------------
 
+> ./6tree -T -in-std/b* ***input_addrs*** -out-std/b* ***output_addrs***
+
 基本功能是把带有IPv6地址的文件进行排序（基于二进制顺序）去重后输出，因为6Tree算法必须要求输入的种子IPv6地址是经过排序和去重的。文件中要求一行放置一个IPv6地址。这里代码支持5种进制模式，其中8进制会省略掉前面2位（the first two bits），32进制会省略掉前面3位，例子如下（这里或许可以做一张表）：
 
  std, colon-hexadecimal, ...
@@ -34,8 +36,6 @@ Function 1: Data translation
  b4, hexadecimal, ...
 
  b5, duotricemary, ...
-
-> ./6tree -T -in-std/b* ***input_addrs*** -out-std/b* ***output_addrs***
 
 > ./6tree -T -in-std **known_active_addrs** -out-b4 **seeds_hex**
 
