@@ -12,9 +12,11 @@ There are four functions in the code, and they are introduced below. Besides, th
 Environment & Compile
 ---------------------
 
-代码是基于C++11标准写的，可以使用GNU编译器编译，能够运行在MacOS或者Linux平台下面。将代码下载下来之后，使用以下指令即可编译：
+The code is written based on C++11 and can be compiled by g++. It can run in macOS or Linux. To compile the code, just type
 
 > g++ -std=c++11 *.cpp -o 6tree
+
+The 3rd function (-L) usually needs a lot of memory. It's preferable to be greater than 16GB.
 
 Function 1: Data translation
 ----------------------------
