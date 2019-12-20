@@ -60,8 +60,6 @@ struct SpaceTreeNode
 #define _ARR_FILE "vec_seq_info"
 // File name of search parameters
 #define _SEARCH_FILE "search_parameters"
-// File name of scanner parameters
-#define _SCANNER_FILE "scanner_parameters"
 
 // Pre-defined budget
 #define _SCAN_BUDGET 10000000

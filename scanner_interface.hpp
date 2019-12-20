@@ -27,6 +27,8 @@ extern string scanner_cmd;
 #define _SI_DFT_INS_BW "--bandwidth=10M"
 #define _SI_DFT_INS_CT "--cooldown-time=4"
 
+// File name of scanner parameters
+#define _SCANNER_FILE "scanner_parameters"
 // File name of address targets in one step
 #define _SI_STEP_TF_FILE "targets.txt"
 // File name of discovered active addresses in one step
