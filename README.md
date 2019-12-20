@@ -1,15 +1,13 @@
 6Tree
 =====
 
-Now I am working on README.md (manuscript below), coming soon ...
+This is a reconstructed version which has basic functions to discover IPv6 active addresses and aliased regions, by learning the distribution of known active addresses. Its idea is introduced in the paper ["*6Tree: Efficient dynamic discovery of active addresses in the IPv6 address space*"](https://www.sciencedirect.com/science/article/abs/pii/S1389128618312003). If you don't have access, please contact liuzhizhu17@nudt.edu.cn, and you can also discuss ideas and technical details with me through the e-mail.
 
-这是6Tree的重构代码（Reconstructed version）能够实现活跃地址与别名区测量能力（言简意赅地说清楚功能，一句话做到，然后第二段再详细讲），并以便于读者和从业者了解与使用。想了解这种方法的idea，请阅读论文...中（如果没有访问渠道的话请给作者发邮件：...。）=>(Dont't have an access to the paper? Please send an e-mail to me: liuzhizhu17@nudt.edu.cn)。您也可以通过邮件(through the mail)与我交流思路和技术细节(technical details)。
+Its purpose is to enable asynchronous scanners to discover IPv6 active addresses more efficiently. These scanners can scan all IPv4 addresses quickly, but it's infeasible in IPv6. According to works in recent years, a solution is to design a target generation algorithm that studies known data and generates address targets that are more likely to be active. Besides, there are aliased regions on the IPv6 Internet, and they disturb the search. So an interruption mechanism is designed to measure the distribution of aliased regions and except them to improve the quality of gathered active addresses. 
 
-这种方法的目的是为了在IPv6环境下适用ZMap等异步扫描器寻找活跃地址。高速扫描器可以遍历IPv4来找地址，但是IPv6不行。所以根据近年来相关工作的思路，一种办法是设计算法学习已知活跃地址的分布特征来训练高速扫描器有方向地找到活跃地址。根据前人的测量情况，IPv6中还存在大规模的别名区，会影响活跃地址发现，因此我在设计6Tree时还考虑了把别名区测量出来并排除出去，从而提高搜集的活跃地址数据质量。
+By the way, the problem background can be comprehended as, in a high-dimensional vector space, valuable vectors are sparsely distributed based on unknown features, and some valuable vectors have been known. Then, how to determine a scale-limited vector set whose vectors are more probable to be valuable? For this purpose, I design the space tree search algorithm and it's suitable. I haven't found other application scenarios for this algorithm yet. Maybe it can be used elsewhere.
 
-这实际上是一种在高维空间下面寻找有价值向量数据的算法，对于IPv6非常适用，不过作者还没找到其他不错的应用环境。或许可以用到AI里面。
-
-代码中包含四种功能，涵盖了6Tree的基本能力，将在下面阐述。其中实现了扫描器接口*scanner_interface.cpp/hpp*，用户可以自己在里面定义实现自己的高速扫描工具。默认情况下，代码采用ZMapv6（给出github的超链接）并通过命令行调用的方式来实现高速扫描能力，因此如果想使用第四个功能，也就是真实网络扫描，就需要先安装ZMapv6。
+There are four functions in the code, and they are introduced below. Besides, the Internet-wide search capability is implemented in *scanner_interface.cpp/hpp*. In default, the code uses the system call of  [ZMapv6](https://github.com/tumi8/zmap) to implement it. So if you want to use the 4th function (-R) to perform an Internet-wide search, you need first install ZMapv6. You can also reimplement the interface by using other scanners or methods. 
 
 Environment & Compile
 ---------------------
