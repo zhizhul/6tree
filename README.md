@@ -1,7 +1,9 @@
 6Tree
 =====
 
-This is a reconstructed version which has basic functions to discover IPv6 active addresses and aliased regions, by learning the distribution of known active addresses. Its idea is introduced in the paper ["*6Tree: Efficient dynamic discovery of active addresses in the IPv6 address space*"](https://www.sciencedirect.com/science/article/abs/pii/S1389128618312003). If you don't have access, please contact liuzhizhu17@nudt.edu.cn, and you can also discuss ideas and technical details with me through the e-mail.
+Dear readers,
+
+This is a reconstructed version which has basic functions to discover IPv6 active addresses and aliased regions, by learning the distribution of known active addresses. Its idea is introduced in the paper ["*6Tree: Efficient dynamic discovery of active addresses in the IPv6 address space*"](https://www.sciencedirect.com/science/article/abs/pii/S1389128618312003). If you don't have access, please contact liuzhizhu17@nudt.edu.cn. Besides, you can also discuss ideas and technical details with me through the e-mail.
 
 Its purpose is to enable asynchronous scanners to discover IPv6 active addresses more efficiently. These scanners can scan all IPv4 addresses quickly, but it's infeasible in IPv6. According to works in recent years, a solution is to design a target generation algorithm that studies known data and generates address targets that are more likely to be active. Besides, there are aliased regions on the IPv6 Internet, and they disturb the search. So an interruption mechanism is designed to measure the distribution of aliased regions and except them to improve the quality of gathered active addresses. 
 
@@ -9,8 +11,8 @@ By the way, the problem background can be comprehended as, in a high-dimensional
 
 There are four functions in the code, and they are introduced below. Besides, the Internet-wide search capability is implemented in *scanner_interface.cpp/hpp*. In default, the code uses the system call of  [ZMapv6](https://github.com/tumi8/zmap) to implement it. So if you want to use the 4th function (-R) to perform an Internet-wide search, you need first install ZMapv6. You can also reimplement the interface by using other scanners or methods. 
 
-Environment & Compile
----------------------
+Environment & Compilation
+-------------------------
 
 The code is written based on C++11 and can be compiled by g++. It can run in macOS or Linux. To compile the code, just type
 
@@ -23,19 +25,20 @@ Function 1: Data translation
 
 > ./6tree -T -in-std/b* ***input_addrs_file*** -out-std/b* ***output_addrs_file***
 
-基本功能是把带有IPv6地址的文件进行排序（基于二进制顺序）去重后输出，因为6Tree算法必须要求输入的种子IPv6地址是经过排序和去重的。文件中要求一行放置一个IPv6地址。这里代码支持5种进制模式，其中8进制会省略掉前面2位（the first two bits），32进制会省略掉前面3位，例子如下（这里或许可以做一张表）：
+Remove repeated addresses, translate them into vector representations and sort them based on the binary order. This is a necessary pre-process for seed data, since 6Tree needs the seed data being sorted and each address vector is unique.
 
- std, colon-hexadecimal, ...
+In the file, each line has one IPv6 address/vector. It supports five kinds of representations as below,
 
- b1, binary, ...
+&nbsp; | Definition | Instance
+:-: | :-: | :-:
+std | colon-hesadecimal | 2020::2020
+b1 | binary | 
+b2 | quaternary |
+b3 | octal | 
+b4 | hexadecimal | 2020 0000 0000 0000 0000 0000 0000 2020
+b5 | duotricemary | 
 
- b2, quaternary, ...
-
- b3, octal, ...
-
- b4, hexadecimal, ...
-
- b5, duotricemary, ...
+ 其中8进制会省略掉前面2位（the first two bits），32进制会省略掉前面3位
 
 > ./6tree -T -in-std **known_active_addrs** -out-b4 **seeds_hex**
 
