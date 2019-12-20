@@ -3,7 +3,7 @@
 
 Dear readers,
 
-This is a reconstructed version which has basic functions to discover IPv6 active addresses and aliased regions, by learning the distribution of known active addresses. Its idea is introduced in the paper ["*6Tree: Efficient dynamic discovery of active addresses in the IPv6 address space*"](https://www.sciencedirect.com/science/article/abs/pii/S1389128618312003). If you don't have access, please contact liuzhizhu17@nudt.edu.cn. Besides, you can also discuss ideas and technical details with me through the e-mail.
+This is a reconstructed version which offers basic functions to discover IPv6 active addresses and aliased regions, by learning the distribution of known active addresses. Its idea is introduced in the paper ["*6Tree: Efficient dynamic discovery of active addresses in the IPv6 address space*"](https://www.sciencedirect.com/science/article/abs/pii/S1389128618312003). If you don't have access, please contact liuzhizhu17@nudt.edu.cn. Besides, you can also discuss ideas and technical details with me through the e-mail.
 
 Its purpose is to enable asynchronous scanners to discover IPv6 active addresses more efficiently. These scanners can scan all IPv4 addresses quickly, but it's infeasible in IPv6. According to works in recent years, a solution is to design a target generation algorithm that studies known data and generates address targets that are more likely to be active. Besides, there are aliased regions on the IPv6 Internet, and they disturb the search. So an interruption mechanism is designed to measure the distribution of aliased regions and except them to improve the quality of gathered active addresses. 
 
@@ -49,29 +49,33 @@ Function 2: Space tree generation
 
 > ./6tree -G -in-b* ***seeds_file*** -out-tree ***tree_folder***
 
-第二个功能根据种子数据生成对应的空间树（ing形式：）表征种子向量在地址空间中的分布特点。结果保存在文件夹中，其中包括这么几个文件：（做一个表格）
+The 2nd function uses seed data to generate space tree information characterizing the distribution feature of seed vectors. Besides, some parameter files are also generated for subsequent search. They are all stored in *tree_folder*, and you can adjust these parameters to run it in different scales.
 
-代码默认还把扫描器和扫描的相关参数文件放在了这个文件夹里面，用户可以调整其中的相关参数。因此基于这个文件夹中的数据就可以用来进行测量了。
+Name | Definition
+:- | :-
+tree_info | Space tree information.
+vec_seq_info | Seed vector sequence information.
+search_parameters | Parameters about address search, such as budget.
+scanner_parameters | Parameters about scanners, such as network protocol.
 
-例如，要基于十六进制模式的种子数据来进行空间树生成，输入
+For instance, if you want to perform a space tree generation based on seed data in hexadecimal, type
 
 > ./6tree -G -in-b4 **seeds_hex** -out-tree **tree_hex** 
 
 Function 3: Local simulation
 ----------------------------
 
-1. *test_addrs*中的地址将会作为假设的全部活跃地址
-2. 结果文件夹里面有这么几个文件...
+> ./6tree -L -in-tree ***tree_folder*** -test-std/b* ***test_addrs_file*** -out-res ***result_folder***
 
-> ./6tree -L -in-tree *tree_folder* -test-std/b* *test_addrs_file* -out-res *result_folder*
+Based on the generated tree information and relative parameters, it can perform a simulation search on your local platform. *test_addrs_file* stores IPv6 addresses/vectors which are regarded as all active addresses (It also needs be processed by the 1st function (-T)). Besides, there is no alias detection in the local simulation. Files in *result_folder* include
 
-> ./6tree -L -in-tree tree_hex -test-std known_all_active_addrs -out-res result_hex
+> ./6tree -L -in-tree **tree_hex** -test-std **known_all_active_addrs** -out-res **result_hex**
 
 Function 4: Internet-wide search
 --------------------------------
 
 与local simulation不同，结果文件夹里面的iris信息中，如果是别名结点，那么nda会记成-1。
 
-> ./6tree -R -in-tree *tree_folder* -out-res *result_folder*
+> ./6tree -R -in-tree ***tree_folder*** -out-res ***result_folder***
 
-> ./6tree -R -in-tree tree_hex -out-rs result_hex
+> ./6tree -R -in-tree **tree_hex** -out-rs **result_hex**
