@@ -32,11 +32,13 @@ In the file, each line has one IPv6 address/vector. It supports five kinds of re
 &nbsp; | Definition | Instance
 :-: | :-: | :-:
 std | colon-hesadecimal | 2020::2020
-b1 | binary | 
-b2 | quaternary |
-b3 | octal | 
-b4 | hexadecimal | 2020 0000 0000 0000 0000 0000 0000 2020
-b5 | duotricemary | 
+b1 | binary | 00100000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000100000
+b2 | quaternary | 0200020000000000000000000000000000000000000000000000000002000200
+b3 | octal | 401000000000000000000000000000000000020040
+b4 | hexadecimal | 20200000000000000000000000002020
+b5 | duotricemary | 0400000000000000000000810
+
+$v_{(2^{16})}(\alpha) = \underbrace{[65152_{(10)} \; 0_{(10)} \; \dots \; 26700_{(10)} \; 45534_{(10)}]}_{8 \; dimensions}$
 
  其中8进制会省略掉前面2位（the first two bits），32进制会省略掉前面3位
 
