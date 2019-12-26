@@ -46,10 +46,10 @@ For instance, if you want to translate known active addresses into seed vectors 
 
 Function 2: Space tree generation
 ---------------------------------
-从这往下的文字都需要语法检查一下。
+
 > ./6tree -G -in-b* ***seeds_file*** -out-tree ***tree_folder***
 
-The 2nd function uses seed data to generate space tree information characterizing the distribution feature of seed vectors. Besides, some parameter files are also generated for subsequent search. They are all stored in *tree_folder*, and you can adjust these parameters to run it in different scales.
+The 2nd function uses seed data to generate space tree information characterizing the distribution feature of seed vectors. Besides, some parameter files are also generated for the subsequent search. They are all stored in *tree_folder*, and you can adjust these parameters to run it on different scales.
 
 Name | Definition
 :- | :-
@@ -67,15 +67,17 @@ Function 3: Local simulation
 
 > ./6tree -L -in-tree ***tree_folder*** -test-std/b* ***test_addrs_file*** -out-res ***result_folder***
 
-Based on the generated tree information and relative parameters, it can perform a simulation search on your local platform. *test_addrs_file* stores IPv6 addresses/vectors which will be regarded as all active addresses, and it also needs to be preprocessed by the 1st function (-T). Besides, there is no alias detection in the local simulation. Files in *result_folder* include
+Based on the generated tree information and relative parameters, it can perform a simulation search on your local platform. *test_addrs_file* stores IPv6 addresses/vectors, which will be regarded as all active addresses, and it also needs to be preprocessed by the 1st function (-T). Besides, there is no alias detection in the local simulation. Files in *result_folder* include
 
 Name | Definition
 :- | :-
-discovered_addrs | 
-iris_info |
-scan_log |
+discovered_addrs | Discovered active addresses.
+iris_info | Visualization information, such as active address density of each node.
+scan_log | Discovery log of active addresses.
 
-在search_parameters中，可以调整budget和step_budget两个参数，它们的作用是...在本地模拟测试中，不会用到search_parameters中关于别名测量的参数（adet_）与scanner_parameters的参数
+In *search_parameters*, you can adjust two parameters: *budget* means total scanning number of addresses, and *step_budget* means scanning number in one iteration of the dynamic search. In the local simulation, parameters about the alias detection (*adet_\**) and the scanner (it's in *scanner_parameters*) will not be used.
+
+For instance, if you want to use the generated space tree *tree_hex* to perform a local search based on *known_all_active_addrs*, type the command below. Besides, since the tree is in hexadecimal, the search will also perform in the hexadecimal mode. 
 
 > ./6tree -L -in-tree **tree_hex** -test-std **known_all_active_addrs** -out-res **result_hex**
 
@@ -88,11 +90,11 @@ Function 4: Internet-wide search
 
 Name | Definition
 :- | :-
-alias_regions | 
-discovered_addrs | 
-discovered_dealiased_addrs | 
-iris_info |
-scan_log |
+alias_regions | Discovered aliased regions.
+discovered_addrs | Discovered active addresses.
+discovered_dealiased_addrs | Discovered dealiased active addresses.
+iris_info | Visualization information, such as active address density of each node.
+scan_log | Discovery log of active addresses and aliased regions.
 
 ZMapv6的指令参数放置在了scanner_parameters中，默认情况下的参数会使得系统调用ZMapv6时的指令为：
 
