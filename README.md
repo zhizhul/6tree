@@ -9,7 +9,7 @@ Its purpose is to enable asynchronous scanners to discover IPv6 active addresses
 
 By the way, the problem background can be comprehended as, in a high-dimensional vector space, valuable vectors are sparsely distributed based on unknown features, and some valuable vectors have been known. Then, how to determine a scale-limited vector set whose vectors are more probable to be valuable? For this purpose, I design the space tree search algorithm and it's suitable. I haven't found other application scenarios for this algorithm yet. Maybe it can be used elsewhere.
 
-There are four functions in the code, and they are introduced below. Besides, the Internet-wide search capability is implemented in *scanner_interface.cpp/hpp*. In default, the code uses the system call of  [ZMapv6](https://github.com/tumi8/zmap) to implement it. So if you want to use the 4th function (-R) to perform an Internet-wide search, you need first install ZMapv6. You can also reimplement the interface by using other scanners or methods. 
+There are four functions in the code, and they are introduced below. Besides, the Internet-wide search capability is implemented in *scanner_interface.cpp/hpp*. In default, the code uses the call of  [ZMapv6](https://github.com/tumi8/zmap) to implement it. So if you want to use the 4th function (-R) to perform an Internet-wide search, you need first install ZMapv6. You can also reimplement the interface by using other scanners or methods. 
 
 Environment & Compilation
 -------------------------
@@ -86,30 +86,31 @@ Function 4: Internet-wide search
 
 > ./6tree -R -in-tree ***tree_folder*** -out-res ***result_folder***
 
-Compared with the local simulation, it doesn't need *test_addrs_file* as assumed all active addresses. Besides, it adds the alias detection function. In the Internet-wide search, files in *result_folder* include
+Compared with the local simulation, it doesn't need *test_addrs_file* as assumed total active addresses. Besides, it adds the alias detection function. In the Internet-wide search, files in *result_folder* include
 
 Name | Definition
 :- | :-
 alias_regions | Discovered aliased regions.
 discovered_addrs | Discovered active addresses.
 discovered_dealiased_addrs | Discovered dealiased active addresses.
-iris_info | Visualization information, such as active address density of each node.
+iris_info | Visualization information, such as active address density (AAD) of each node.
 scan_log | Discovery log of active addresses and aliased regions.
 
-In *iris_info*, if a tree node is detected as aliased, its *nda* and *density* will be set as -1.
+In *iris_info*, if a tree node is detected as aliased, its *nda* and *density* will be set as -1. In *search_parameters*, parameters about alias detection (*adet_\**) include
 
-$\omicron$
+Name | Definition
+:- | :-
+ptimes | Probe number times in alias detection.
+tsscale_thd | When the target scale is more than *tsscale_thd*, the node will start to be checked.
+aad_thd | When the scale is *tsscale_thd*, the detection will be triggered if AAD >= *aad_thd*. When the scale > *tsscale_thd*, the detection will be triggered if AAD >= an inverse proportional function where *aad_thd* and the scale are parameters. 
+crip | After alias detection, if the scale > *crip*, it will be regarded as an aliased region.
 
-在search_parameters中，还可以调整关于别名探测的参数，它们包括...作用是...
-
-ZMapv6的指令参数放置在了scanner_parameters中，默认情况下的参数会使得系统调用ZMapv6时的指令为：
+Parameters about the ZMapv6 scanner stores in *scanner_parameters*. In default, the call based on these parameters will be
 
 > zmap --probe-module=icmp6_echoscan --ipv6-target-file=targets.txt --output-file=result.txt --ipv6-source-ip=2001:----::----:1002 --bandwidth=10M --cooldown-time=4
 
-想了解这些二级指令，请查阅ZMap的[官方说明文档](https://github.com/zmap/zmap/wiki)。
+The secondary instructions of ZMapv6 are introduced in the [Github Wiki](https://github.com/zmap/zmap/wiki). Apparently, *--ipv6-source-ip* needs to be changed into the IPv6 address of your host.
 
-显然您首先要更改--ipv6-source参数为您主机（your host）的IPv6地址才行，另外如果要调整ZMapv6使用其他网络协议而不是ICMPv6，您需要调整--probe-module参数。
-
-例如，如果您要使用生成的空间树tree_hex来运行真实网络上的活跃地址与别名区测量，输入
+For instance, if you want to use the generated space tree *tree_hex* to perform a measurement of active addresses and aliased regions on the IPv6 Internet, type
 
 > ./6tree -R -in-tree **tree_hex** -out-rs **result_hex**
