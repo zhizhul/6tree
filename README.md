@@ -98,7 +98,7 @@ scan_log | Discovery log of active addresses and aliased regions.
 
 In *iris_info*, if a tree node is detected as aliased, its *nda* and *density* will be set as -1.
 
-\omicron
+$\omicron$
 
 在search_parameters中，还可以调整关于别名探测的参数，它们包括...作用是...
 
