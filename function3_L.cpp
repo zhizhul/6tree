@@ -1850,10 +1850,10 @@ void f3_work(int type1, string str2, int type3, string str4, int type5, string s
 
     f1_print_time();
     cout << endl << "Total scanning finished." << endl;
-    cout << "find total active addresses: " << addr_total_num << endl;
+    cout << "Find total active addresses: " << addr_total_num << endl;
     f3_print_time(scan_log);
     scan_log << endl << "Total scanning finished." << endl;
-    scan_log << "find total active addresses: " << addr_total_num << endl;
+    scan_log << "Find total active addresses: " << addr_total_num << endl;
     addr_total_res.close();
     scan_log.close();
     

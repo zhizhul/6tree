@@ -46,7 +46,7 @@ For instance, if you want to translate known active addresses into seed vectors 
 
 Function 2: Space tree generation
 ---------------------------------
-
+从这往下的文字都需要语法检查一下。
 > ./6tree -G -in-b* ***seeds_file*** -out-tree ***tree_folder***
 
 The 2nd function uses seed data to generate space tree information characterizing the distribution feature of seed vectors. Besides, some parameter files are also generated for subsequent search. They are all stored in *tree_folder*, and you can adjust these parameters to run it in different scales.
@@ -56,7 +56,7 @@ Name | Definition
 tree_info | Space tree information.
 vec_seq_info | Seed vector sequence information.
 search_parameters | Parameters about address search, such as budget.
-scanner_parameters | Parameters about scanners, such as network protocol.
+scanner_parameters | Parameters about scanners, such as the network protocol.
 
 For instance, if you want to perform a space tree generation based on seed data in hexadecimal, type
 
@@ -67,15 +67,39 @@ Function 3: Local simulation
 
 > ./6tree -L -in-tree ***tree_folder*** -test-std/b* ***test_addrs_file*** -out-res ***result_folder***
 
-Based on the generated tree information and relative parameters, it can perform a simulation search on your local platform. *test_addrs_file* stores IPv6 addresses/vectors which are regarded as all active addresses (It also needs be processed by the 1st function (-T)). Besides, there is no alias detection in the local simulation. Files in *result_folder* include
+Based on the generated tree information and relative parameters, it can perform a simulation search on your local platform. *test_addrs_file* stores IPv6 addresses/vectors which will be regarded as all active addresses, and it also needs to be preprocessed by the 1st function (-T). Besides, there is no alias detection in the local simulation. Files in *result_folder* include
+
+Name | Definition
+:- | :-
+discovered_addrs | 
+iris_info |
+scan_log |
+
+在search_parameters中，可以调整budget和step_budget两个参数，它们的作用是...在本地模拟测试中，不会用到search_parameters中关于别名测量的参数（adet_）与scanner_parameters的参数
 
 > ./6tree -L -in-tree **tree_hex** -test-std **known_all_active_addrs** -out-res **result_hex**
 
 Function 4: Internet-wide search
 --------------------------------
 
-与local simulation不同，结果文件夹里面的iris信息中，如果是别名结点，那么nda会记成-1。
-
 > ./6tree -R -in-tree ***tree_folder*** -out-res ***result_folder***
+
+与local simulation不同，结果文件夹里面的iris信息中，如果是别名结点，那么nda会记成-1。这里也做一个表格放结果文件说明，注意会有5个结果文件。
+
+Name | Definition
+:- | :-
+alias_regions | 
+discovered_addrs | 
+discovered_dealiased_addrs | 
+iris_info |
+scan_log |
+
+ZMapv6的指令参数放置在了scanner_parameters中，默认情况下的参数会使得系统调用ZMapv6时的指令为：
+
+> zmap --probe-module=icmp6_echoscan --ipv6-target-file=targets.txt --output-file=result.txt --ipv6-source-ip=2001:----::----:1002 --bandwidth=10M --cooldown-time=4
+
+想了解这些二级指令，请查阅ZMap的[官方说明文档](https://github.com/zmap/zmap/wiki)。
+
+显然您首先要更改--ipv6-source参数为您主机（your host）的IPv6地址才行，另外如果要调整ZMapv6使用其他网络协议而不是ICMPv6，您需要调整--probe-module参数。
 
 > ./6tree -R -in-tree **tree_hex** -out-rs **result_hex**
