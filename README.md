@@ -75,7 +75,7 @@ discovered_addrs | Discovered active addresses.
 iris_info | Visualization information, such as active address density of each node.
 scan_log | Discovery log of active addresses.
 
-In *search_parameters*, you can adjust two parameters: *budget* means total scanning number of addresses, and *step_budget* means scanning number in one iteration of the dynamic search. In the local simulation, parameters about the alias detection (*adet_\**) and the scanner (it's in *scanner_parameters*) will not be used.
+In *search_parameters*, you can adjust two parameters: *budget* means total scanning number of addresses, and *step_budget* means scanning number in one iteration of the dynamic search. In the local simulation, parameters about the alias detection (*adet_\** in *search_parameters*) and the scanner (in *scanner_parameters*) will not be used.
 
 For instance, if you want to use the generated space tree *tree_hex* to perform a local search based on *known_all_active_addrs*, type the command below. Besides, since the tree is in hexadecimal, the search will also perform in the hexadecimal mode. 
 
@@ -86,7 +86,7 @@ Function 4: Internet-wide search
 
 > ./6tree -R -in-tree ***tree_folder*** -out-res ***result_folder***
 
-与local simulation不同，结果文件夹里面的iris信息中，如果是别名结点，那么nda会记成-1。这里也做一个表格放结果文件说明，注意会有5个结果文件。
+Compared with the local simulation, it doesn't need *test_addrs_file* as assumed all active addresses. Besides, it adds the alias detection function. In the Internet-wide search, files in *result_folder* include
 
 Name | Definition
 :- | :-
@@ -96,6 +96,12 @@ discovered_dealiased_addrs | Discovered dealiased active addresses.
 iris_info | Visualization information, such as active address density of each node.
 scan_log | Discovery log of active addresses and aliased regions.
 
+In *iris_info*, if a tree node is detected as aliased, its *nda* and *density* will be set as -1.
+
+\omicron
+
+在search_parameters中，还可以调整关于别名探测的参数，它们包括...作用是...
+
 ZMapv6的指令参数放置在了scanner_parameters中，默认情况下的参数会使得系统调用ZMapv6时的指令为：
 
 > zmap --probe-module=icmp6_echoscan --ipv6-target-file=targets.txt --output-file=result.txt --ipv6-source-ip=2001:----::----:1002 --bandwidth=10M --cooldown-time=4
@@ -103,5 +109,7 @@ ZMapv6的指令参数放置在了scanner_parameters中，默认情况下的参�
 想了解这些二级指令，请查阅ZMap的[官方说明文档](https://github.com/zmap/zmap/wiki)。
 
 显然您首先要更改--ipv6-source参数为您主机（your host）的IPv6地址才行，另外如果要调整ZMapv6使用其他网络协议而不是ICMPv6，您需要调整--probe-module参数。
+
+例如，如果您要使用生成的空间树tree_hex来运行真实网络上的活跃地址与别名区测量，输入
 
 > ./6tree -R -in-tree **tree_hex** -out-rs **result_hex**
