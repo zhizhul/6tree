@@ -113,4 +113,4 @@ The secondary instructions of ZMapv6 are introduced in the [Github Wiki](https:/
 
 For instance, if you want to use the generated space tree *tree_hex* to perform a measurement of active addresses and aliased regions on the IPv6 Internet, type
 
-> ./6tree -R -in-tree **tree_hex** -out-rs **result_hex**
+> ./6tree -R -in-tree **tree_hex** -out-res **result_hex**
