@@ -18,13 +18,12 @@
 
 using namespace std;
 
-int work(int argc, const char * argv[])
+void work(int argc, const char * argv[])
 {
-    // Analyze the first instruction, if it's not T/G/L/R, exit.
+    // Analyze the first instruction, if it's not -T/G/L/R, exit.
     if (argc <= 1 || string(argv[1]).length() != 2 || argv[1][0] != '-')
     {
         cout << "[Error] The first instruction is incorrect." << endl;
-        return 0;
     }
     else
     {
@@ -50,12 +49,10 @@ int work(int argc, const char * argv[])
                 f4_access(argc, argv);
                 break;
             default:
-                // Analyze the first instruction, if it's not T/G/L/R, exit.
+                // Analyze the first instruction, if it's not -T/G/L/R, exit.
                 cout << "[Error] The first instruction is incorrect." << endl;
-                return 0;
         }
     }
-    return 0;
 }
 
 int main(int argc, const char * argv[])
